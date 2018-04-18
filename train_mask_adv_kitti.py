@@ -18,11 +18,11 @@ from read_featuremap_occlusion import FeatureReader
 from D_Net import build_DNet
 from my_loss import L1Loss
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 lr = 1e-4
 lr_d = 1e-6
-lmda = 0.001
+lmda = 0.01
 rratio = 3.0
 # training_name = 'ft'
 training_name = 'MASKED_kitti_adv_lrg{}_lrd{}_lmda{}_r{}_SHALLOW_DROP'.format(lr, lr_d, lmda, rratio)
@@ -30,7 +30,7 @@ BATCH_SIZE = 1
 D_INPUT_W = 32
 D_INPUT_H = 32
 
-data_dir = '/home/tmu/detection_dataset/kitti/mask_noresize/feature_map-conv4pool/'
+data_dir = '/siyuvol/dataset/kitti/mask_noresize/feature_map-conv4pool/'
 featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=BATCH_SIZE,
