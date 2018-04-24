@@ -40,15 +40,15 @@ data_transforms = {
 }
 
 
-data_dir = '/home/tmu/detection_dataset/kitti/mask_noresize/test/1'
-image_datasets = ImageFolder(data_dir, data_transforms['test'])
+data_dir = '/siyuvol/dataset/kitti/ped_inst/test/0'
+image_datasets = ImageFolder(data_dir, data_transforms['train'])
 dataloaders = torch.utils.data.DataLoader(image_datasets, batch_size=1,
                                            shuffle=False, num_workers=4)
 dataset_sizes = len(image_datasets)
 
 use_gpu = torch.cuda.is_available()
 
-save_dir = '/home/tmu/detection_dataset/kitti/mask_noresize/feature_map-conv4pool/test/1'
+save_dir = '/siyuvol/dataset/kitti/ped_inst/feature_map-conv4pool/test/0'
 if not os.path.exists(save_dir):
 	os.makedirs(save_dir)
 

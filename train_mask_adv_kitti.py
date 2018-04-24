@@ -18,9 +18,9 @@ from read_featuremap_occlusion import FeatureReader
 from D_Net import build_DNet
 from my_loss import L1Loss
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
-lr = 1e-4
+lr = 1e-3
 lr_d = 1e-6
 lmda = 0.01
 rratio = 3.0
