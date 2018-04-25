@@ -17,17 +17,17 @@ from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 lr = 0.01
 training_name = 'PEDINST_MASK_kitti_trans_lr{}'.format(lr)
-# training_name = 'test_mask'
+# training_name = 'test3'
 
 data_dir = '/siyuvol/dataset/kitti/ped_inst/feature_map-conv4pool/'
 featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
-                                                shuffle=False, num_workers=4)
+                                                shuffle=False, num_workers=0)
                                                 for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
 print (dataset_sizes)
@@ -42,7 +42,7 @@ if not os.path.exists(save_dir):
 def train_model(model, criterion, optimizer, num_epochs=200):
     since = time.time()
     
-    for epoch in range(1, num_epochs+1):
+    for epoch in range(101, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
@@ -142,7 +142,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
     # model.load_state_dict(best_model_wts)
     return
 
-model_trans = build_UNet(type='UNet1', use_dropout=True, is_pretrained=False)
+model_trans = build_UNet(type='UNet1', use_dropout=True, is_pretrained=True)
 if use_gpu:
     model_trans = model_trans.cuda()
 

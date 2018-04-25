@@ -199,7 +199,7 @@ def build_UNet(type='UNet1', use_bias=True, use_dropout=False, is_pretrained=Fal
 		# 	print kk
 		# exit()
 		if type == 'UNet1':
-			model.load_state_dict(torch.load('/siyuvol/py_flood/save/MASK_kitti_UNet_lr0.01_SGD_dropout/transformer_MASK_kitti_UNet_lr0.01_SGD_dropout_350.pth'))
+			model.load_state_dict(torch.load('/siyuvol/py_flood/save/test3/transformer_test3_100.pth'))
 		elif type == 'UNet2':
 			model.load_state_dict(torch.load(''))
 	return model
