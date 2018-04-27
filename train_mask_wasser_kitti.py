@@ -20,9 +20,9 @@ from my_loss import L1Loss
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-lr = 1e-3
+lr = 1e-5
 lr_d = 1e-6
-lmda = 1
+lmda = 0.01
 rratio = 3.0
 training_name = 'test_wasser'
 # training_name = 'MASKED_kitti_wasser_lrg{}_lrd{}_lmda{}_r{}_SHALLOW_DROP'.format(lr, lr_d, lmda, rratio)
@@ -175,14 +175,18 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                 label_adv = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase) # we want to generator to produce 1
                 outputs_D = netD(outputs_trans).mean()
                 
+                
                 if not occ_level == 2:
                     mask = construct_mask(unocc_cords, outputs_trans.size())
                     mask = torch.autograd.Variable(mask.cuda(), requires_grad=False)
                     loss_gen = criterion_rec(outputs_trans, gt, mask)
                     loss_trans = loss_gen + lmda * (outputs_D - label_adv)
+                    iter_loss_gen = loss_gen.data[0] * inputs.size(0)  
                 else:
                     # loss_trans = lmda * criterion_adv(outputs_D, label_adv)
-                    lmda * (outputs_D - label_adv)
+                    loss_trans = lmda * (outputs_D - label_adv)
+                    loss_gen = 0.0
+                    iter_loss_gen = 0.0
 
                 # backward + optimize only if in training phase
                 if phase == 'train':
@@ -191,7 +195,6 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                 
                 iter_loss_trans = loss_trans.data[0] * inputs.size(0)
                 
-                iter_loss_gen = loss_gen.data[0] * inputs.size(0)
                 
                 if ix % 100 == 0:
                     print ('iter {}, Loss Trans={:.4f}, Gen={:.4f}, Adv Real={:.8f}, Adv Fake={:.8f}, acc_d1: {:.2f}, acc_d2: {:.2f}'.format(
