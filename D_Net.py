@@ -88,20 +88,10 @@ class DNet_pooling_shallow(nn.Module):
 		self.rois = torch.from_numpy(np.array([0.0, 0.0, 0.0, POOLING_SIZE, POOLING_SIZE], np.float32))
 		self.RCNN_roi_pool = _RoIPooling(POOLING_SIZE, POOLING_SIZE, 1.0)
 		
-		# assume input resized to 32x32
+		# assume input resized to 16x16
 		conv1 = nn.Conv2d(512, 1024, kernel_size=4, stride=2, padding=1, bias=use_bias)
 		norm1 = nn.BatchNorm2d(1024)
 		relu1 = nn.LeakyReLU(0.2, True)
-
-		# #16x16
-		# conv2 = nn.Conv2d(1024, 2048, kernel_size=4, stride=2, padding=1, bias=use_bias)
-		# norm2 = nn.BatchNorm2d(2048)
-		# relu2 = nn.LeakyReLU(0.2, True)
-
-		# #8x8
-		# conv3 = nn.Conv2d(2048, 4096, kernel_size=4, stride=2, padding=1, bias=use_bias)
-		# norm3 = nn.BatchNorm2d(4096)
-		# relu3 = nn.LeakyReLU(0.2, True)
 
 		#4x4
 		conv2 = nn.Conv2d(1024, 1, kernel_size=8, stride=1, padding=0, bias=use_bias)
@@ -119,6 +109,34 @@ class DNet_pooling_shallow(nn.Module):
 		x = self.discriminator(pooled_feat)
 		return x
 
+class DNet_shallow_wasser(nn.Module):
+	def __init__(self, use_dropout=False):
+		super(DNet_pooling_shallow, self).__init__()
+		use_bias = False
+		POOLING_SIZE = 16.0
+		
+		self.rois = torch.from_numpy(np.array([0.0, 0.0, 0.0, POOLING_SIZE, POOLING_SIZE], np.float32))
+		self.RCNN_roi_pool = _RoIPooling(POOLING_SIZE, POOLING_SIZE, 1.0)
+		
+		# assume input resized to 16x16
+		conv1 = nn.Conv2d(512, 1024, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		norm1 = nn.BatchNorm2d(1024)
+		relu1 = nn.LeakyReLU(0.2, True)
+
+		#4x4
+		conv2 = nn.Conv2d(1024, 1, kernel_size=8, stride=1, padding=0, bias=use_bias)
+		if use_dropout:
+			self.discriminator = nn.Sequential(conv1, norm1, nn.Dropout(0.5), relu1, conv2)
+		else:
+			self.discriminator = nn.Sequential(conv1, norm1, relu1, conv2)
+		
+	def forward(self, x):
+		
+		rois = Variable(self.rois).cuda()
+		pooled_feat = self.RCNN_roi_pool(x, rois.view(-1, 5))
+		x = self.discriminator(pooled_feat)
+		return x
+
 def weights_init_xavier(m):
 	classname = m.__class__.__name__
 	# print(classname)
@@ -131,11 +149,14 @@ def weights_init_xavier(m):
 		init.constant(m.bias.data, 0.0)
 
 
-def build_DNet(is_pretrained=False, is_shallow=False, use_dropout=False):
-	if is_shallow:
-		model = DNet_pooling_shallow(use_dropout=use_dropout)
+def build_DNet(is_pretrained=False, is_shallow=False, use_dropout=False, is_wasser=False):
+	if is_wasser:
+		model = DNet_shallow_wasser(use_dropout=use_dropout)
 	else:
-		model = DNet_pooling()
+		if is_shallow:
+			model = DNet_pooling_shallow(use_dropout=use_dropout)
+		else:
+			model = DNet_pooling()
 		
 	if is_pretrained:
 		model.load_state_dict(torch.load(''))

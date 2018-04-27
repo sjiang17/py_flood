@@ -22,10 +22,10 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 lr = 1e-3
 lr_d = 1e-6
-lmda = 0.01
+lmda = 1
 rratio = 3.0
-# training_name = 'ft'
-training_name = 'MASKED_kitti_adv_lrg{}_lrd{}_lmda{}_r{}_SHALLOW_DROP'.format(lr, lr_d, lmda, rratio)
+training_name = 'test_wasser'
+# training_name = 'MASKED_kitti_wasser_lrg{}_lrd{}_lmda{}_r{}_SHALLOW_DROP'.format(lr, lr_d, lmda, rratio)
 BATCH_SIZE = 1
 
 data_dir = '/siyuvol/dataset/kitti/mask_noresize/feature_map-conv4pool/'
@@ -70,7 +70,7 @@ def construct_mask(unocc_cords, output_size):
     return mask
 
 
-def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optimizer_D, num_epochs):
+def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epochs):
     since = time.time()
 
     label_adv_tensor = torch.FloatTensor(BATCH_SIZE)
@@ -87,8 +87,10 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
             if phase == 'train':
                 # scheduler.step()
                 netG.train(True)  # Set model to training mode
+                netD.train(True)
             else:
                 netG.train(False)  # Set model to evaluate mode
+                netD.train(False)
 
             running_loss_trans = 0.0
             running_loss_adv_real = 0.0
@@ -99,6 +101,9 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
             unocc_cnt = 0.0
             acc_d1_epoch, acc_d2_epoch = 0.0, 0.0
             unocc_cnt_epoch = 0.0
+
+            one = torch.FloatTensor([1])
+            mone = one * -1
             
             # Iterate over data.
             for ix, data in enumerate(dataloaders[phase]):
@@ -114,60 +119,69 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
 
                 #-------train with real-------
                 # only when all objects are unoccluded
+                for p in netD.parameters():
+                    p.requires_grad = True 
+                    p.data.clamp_(-0.01, 0.01)
+
+                optimizer_D.zero_grad()
 
                 if occ_level == 0:
                     unocc_cnt += 1
                     unocc_cnt_epoch += 1
-                    optimizer_D.zero_grad()
-                    label_adv_real = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase)
+                    # label_adv_real = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase)
                     outputs_D_real = netD(gt)
                     od1 = outputs_D_real.data.cpu()[0,0,0,0]
                     # print('od1: ', od1)
                     acc_d1 += (od1 >= 0.5)
                     acc_d1_epoch += (od1 >= 0.5)
                     
-                    loss_D_real = criterion_adv(outputs_D_real, label_adv_real) * rratio
+                    # loss_D_real = criterion_adv(outputs_D_real, label_adv_real) * rratio
                     if phase == 'train':
-                        loss_D_real.backward()
-                    iter_loss_adv_real = loss_D_real.data[0] * inputs.size(0)
+                        # loss_D_real.backward()
+                        outputs_D_real.backward(one)
+                    iter_loss_adv_real = outputs_D_real.data[0] * inputs.size(0)
                     
                 else:
-                    optimizer_D.zero_grad()
                     iter_loss_adv_real = 0.0
                 
                 #--------train with fake--------
                 outputs_trans = netG(inputs) # fake
-                label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
+                # label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
                 outputs_D_fake = netD(outputs_trans.detach())
                 od2 = outputs_D_fake.data.cpu()[0,0,0,0]
                 acc_d2 += (od2 < 0.5)
                 acc_d2_epoch += (od2 < 0.5)
                 
-                loss_D_fake = criterion_adv(outputs_D_fake, label_adv_fake)
+                # loss_D_fake = criterion_adv(outputs_D_fake, label_adv_fake)
                 if phase == 'train':
-                    loss_D_fake.backward()
+                    # loss_D_fake.backward()
+                    outputs_D_fake.backward(mone)
+                    errD = outputs_D_real - outputs_D_fake
                     optimizer_D.step()
                 
-                iter_loss_adv_fake = loss_D_fake.data[0] * inputs.size(0)
+                iter_loss_adv_fake = outputs_D_fake.data[0] * inputs.size(0)
                 
                 #################################
                 # Update transformation network #
                 #################################
 
+                for p in netD.parameters():
+                    p.requires_grad = False 
                 # zero the parameter gradients
                 optimizer_trans.zero_grad()
 
                 # forward
-                label_adv = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase) # we want to generator to produce 1
+                label_adv = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase) # we want to generator to produce 1
                 outputs_D = netD(outputs_trans)
                 
                 if not occ_level == 2:
                     mask = construct_mask(unocc_cords, outputs_trans.size())
                     mask = torch.autograd.Variable(mask.cuda(), requires_grad=False)
                     loss_gen = criterion_rec(outputs_trans, gt, mask)
-                    loss_trans = loss_gen + lmda * criterion_adv(outputs_D, label_adv)
+                    loss_trans = loss_gen + lmda * (outputs_D - label_adv)
                 else:
-                    loss_trans = lmda * criterion_adv(outputs_D, label_adv)
+                    # loss_trans = lmda * criterion_adv(outputs_D, label_adv)
+                    lmda * (outputs_D - label_adv)
 
                 # backward + optimize only if in training phase
                 if phase == 'train':
@@ -224,19 +238,20 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
     return
 
 model_trans = build_UNet(type='UNet1',use_bias=True, use_dropout=True, is_pretrained=True)
-model_D = build_DNet(is_shallow=True, use_dropout=True)
+model_D = build_DNet(is_shallow=True, use_dropout=True, is_wasser=True)
 if use_gpu:
     model_trans = model_trans.cuda()
     model_D = model_D.cuda()
 
 criterion_rec = L1Loss()
-criterion_adv = nn.BCELoss()
+# criterion_adv = nn.BCELoss()
 # optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9)
-optimizer_trans = optim.Adam(model_trans.parameters(), lr=lr, betas=(0.5, 0.999))
+# optimizer_trans = optim.Adam(model_trans.parameters(), lr=lr, betas=(0.5, 0.999))
+optimizer_trans = optim.RMSprop(model_trans.parameters(), lr=lr)
 optimizer_D = optim.SGD(model_D.parameters(), lr=lr_d, momentum=0.9)
 #optimizer_D = optim.Adam(model_D.parameters(), lr=lr_d, betas=(0.5, 0.999), weight_decay=0.0005)
 
 # Decay LR by a factor of 0.1 every 7 epochs
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 print(training_name)
-train_model(model_trans, model_D, criterion_rec, criterion_adv, optimizer_trans, optimizer_D, num_epochs=200)
+train_model(model_trans, model_D, criterion_rec, optimizer_trans, optimizer_D, num_epochs=200)
