@@ -111,7 +111,7 @@ class DNet_pooling_shallow(nn.Module):
 
 class DNet_shallow_wasser(nn.Module):
 	def __init__(self, use_dropout=False):
-		super(DNet_pooling_shallow, self).__init__()
+		super(DNet_shallow_wasser, self).__init__()
 		use_bias = False
 		POOLING_SIZE = 16.0
 		

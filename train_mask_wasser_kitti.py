@@ -18,7 +18,7 @@ from read_featuremap_occlusion import FeatureReader
 from D_Net import build_DNet
 from my_loss import L1Loss
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 lr = 1e-3
 lr_d = 1e-6
@@ -104,6 +104,7 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
 
             one = torch.FloatTensor([1])
             mone = one * -1
+            one, mone = one.cuda(), mone.cuda()
             
             # Iterate over data.
             for ix, data in enumerate(dataloaders[phase]):
