@@ -130,7 +130,7 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                     unocc_cnt += 1
                     unocc_cnt_epoch += 1
                     # label_adv_real = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase)
-                    outputs_D_real = netD(gt)
+                    outputs_D_real = netD(gt).mean()
                     od1 = outputs_D_real.data.cpu()[0,0,0,0]
                     # print('od1: ', od1)
                     acc_d1 += (od1 >= 0.5)
@@ -140,7 +140,7 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                     if phase == 'train':
                         # loss_D_real.backward()
                         outputs_D_real.backward(one)
-                    iter_loss_adv_real = outputs_D_real.data[0] * inputs.size(0)
+                    iter_loss_adv_real = outputs_D_real.data[0] * inputs.size(0) * rratio
                     
                 else:
                     iter_loss_adv_real = 0.0
@@ -148,7 +148,7 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                 #--------train with fake--------
                 outputs_trans = netG(inputs) # fake
                 # label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
-                outputs_D_fake = netD(outputs_trans.detach())
+                outputs_D_fake = netD(outputs_trans.detach()).mean()
                 od2 = outputs_D_fake.data.cpu()[0,0,0,0]
                 acc_d2 += (od2 < 0.5)
                 acc_d2_epoch += (od2 < 0.5)
@@ -173,7 +173,7 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
 
                 # forward
                 label_adv = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase) # we want to generator to produce 1
-                outputs_D = netD(outputs_trans)
+                outputs_D = netD(outputs_trans).mean()
                 
                 if not occ_level == 2:
                     mask = construct_mask(unocc_cords, outputs_trans.size())
