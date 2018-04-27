@@ -131,10 +131,10 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                     unocc_cnt_epoch += 1
                     # label_adv_real = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase)
                     outputs_D_real = netD(gt).mean()
-                    od1 = outputs_D_real.data.cpu()[0,0,0,0]
+                    od1 = outputs_D_real.data.cpu()[0]
                     # print('od1: ', od1)
-                    acc_d1 += (od1 >= 0.5)
-                    acc_d1_epoch += (od1 >= 0.5)
+                    acc_d1 += (od1 >= 0.0)
+                    acc_d1_epoch += (od1 >= 0.0)
                     
                     # loss_D_real = criterion_adv(outputs_D_real, label_adv_real) * rratio
                     if phase == 'train':
@@ -149,9 +149,9 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                 outputs_trans = netG(inputs) # fake
                 # label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
                 outputs_D_fake = netD(outputs_trans.detach()).mean()
-                od2 = outputs_D_fake.data.cpu()[0,0,0,0]
-                acc_d2 += (od2 < 0.5)
-                acc_d2_epoch += (od2 < 0.5)
+                od2 = outputs_D_fake.data.cpu()[0]
+                acc_d2 += (od2 < 0.0)
+                acc_d2_epoch += (od2 < 0.0)
                 
                 # loss_D_fake = criterion_adv(outputs_D_fake, label_adv_fake)
                 if phase == 'train':
