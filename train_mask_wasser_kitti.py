@@ -175,16 +175,17 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                 label_adv = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase) # we want to generator to produce 1
                 outputs_D = netD(outputs_trans).mean()
                 
-                
+                loss_GenD = lmda * (outputs_D - label_adv)
                 if not occ_level == 2:
                     mask = construct_mask(unocc_cords, outputs_trans.size())
                     mask = torch.autograd.Variable(mask.cuda(), requires_grad=False)
                     loss_gen = criterion_rec(outputs_trans, gt, mask)
-                    loss_trans = loss_gen + lmda * (outputs_D - label_adv)
+                    loss_trans = loss_gen + loss_GenD
                     iter_loss_gen = loss_gen.data[0] * inputs.size(0)  
                 else:
                     # loss_trans = lmda * criterion_adv(outputs_D, label_adv)
-                    loss_trans = lmda * (outputs_D - label_adv)
+                    loss_GenD = lmda * (outputs_D - label_adv)
+                    loss_trans = loss_GenD
                     loss_gen = 0.0
                     iter_loss_gen = 0.0
 
@@ -193,7 +194,7 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                     loss_trans.backward()
                     optimizer_trans.step()
                 
-                iter_loss_trans = loss_trans.data[0] * inputs.size(0)
+                iter_loss_trans = loss_GenD.data[0] * inputs.size(0)
                 
                 
                 if ix % 100 == 0:
