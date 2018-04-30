@@ -18,11 +18,11 @@ from read_featuremap_occlusion import FeatureReader
 from D_Net import build_DNet
 from my_loss import L1Loss
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 lr = 1e-5
 lr_d = 1e-6
-lmda = 0.01
+lmda = 0.1
 rratio = 3.0
 training_name = 'test_wasser'
 # training_name = 'MASKED_kitti_wasser_lrg{}_lrd{}_lmda{}_r{}_SHALLOW_DROP'.format(lr, lr_d, lmda, rratio)
@@ -133,13 +133,13 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                     outputs_D_real = netD(gt).mean()
                     od1 = outputs_D_real.data.cpu()[0]
                     # print('od1: ', od1)
-                    acc_d1 += (od1 >= 0.0)
-                    acc_d1_epoch += (od1 >= 0.0)
+                    acc_d1 += (od1 < 0.0)
+                    acc_d1_epoch += (od1 < 0.0)
                     
                     # loss_D_real = criterion_adv(outputs_D_real, label_adv_real) * rratio
                     if phase == 'train':
                         # loss_D_real.backward()
-                        outputs_D_real.backward(one)
+                        outputs_D_real.backward(mone)
                     iter_loss_adv_real = outputs_D_real.data[0] * inputs.size(0) * rratio
                     
                 else:
@@ -150,13 +150,13 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                 # label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
                 outputs_D_fake = netD(outputs_trans.detach()).mean()
                 od2 = outputs_D_fake.data.cpu()[0]
-                acc_d2 += (od2 < 0.0)
-                acc_d2_epoch += (od2 < 0.0)
+                acc_d2 += (od2 >= 0.0)
+                acc_d2_epoch += (od2 >= 0.0)
                 
                 # loss_D_fake = criterion_adv(outputs_D_fake, label_adv_fake)
                 if phase == 'train':
                     # loss_D_fake.backward()
-                    outputs_D_fake.backward(mone)
+                    outputs_D_fake.backward(one)
                     errD = outputs_D_real - outputs_D_fake
                     optimizer_D.step()
                 
@@ -175,7 +175,7 @@ def train_model(netG, netD, criterion_rec, optimizer_trans, optimizer_D, num_epo
                 label_adv = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase) # we want to generator to produce 1
                 outputs_D = netD(outputs_trans).mean()
                 
-                loss_GenD = lmda * (outputs_D - label_adv)
+                loss_GenD = lmda * (-outputs_D)
                 if not occ_level == 2:
                     mask = construct_mask(unocc_cords, outputs_trans.size())
                     mask = torch.autograd.Variable(mask.cuda(), requires_grad=False)
