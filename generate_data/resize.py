@@ -7,6 +7,7 @@ MAX_SIZE = 1000
 basedirs = ['/train/0', '/train/1', '/test/0', '/test/1']
 
 for basedir in basedirs:
+	print basedir
 	kitti_img_dir = '/siyuvol/dataset/kitti/mask_noresize' + basedir
 	save_dir = '/siyuvol/dataset/kitti/greymask' + basedir 
 	if not os.path.exists(save_dir):
@@ -17,11 +18,13 @@ for basedir in basedirs:
 		img = Image.open(img_file)
 		width, height = img.size
 		if width <= height:
-			r_height = int(max(SCALE / width * height, MAX_SIZE))
+			r_width = int(SCALE)
+			r_height = int(min(SCALE / width * height, MAX_SIZE))
 		else:
-			r_width = int(max(SCALE / height * height, MAX_SIZE))
-		print width, r_width, height, r_height
-		img.resize((r_width, r_height), PIL.Image.BICUBIC)
+			r_height = int(SCALE)
+			r_width = int(min(SCALE / height * width, MAX_SIZE))
+		# print width, r_width, height, r_height
+		resized = img.resize((r_width, r_height), Image.BICUBIC)
 
-		img.save(os.path.join(save_dir, os.path.basename(img_file)), format='png')
+		resized.save(os.path.join(save_dir, os.path.basename(img_file)), format='png')
 

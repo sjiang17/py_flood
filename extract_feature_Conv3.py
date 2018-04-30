@@ -40,7 +40,7 @@ data_transforms = {
 }
 
 
-data_dir = '/siyuvol/dataset/kitti/ped_inst/test/0'
+data_dir = '/siyuvol/dataset/kitti/greymask/train/0'
 image_datasets = ImageFolder(data_dir, data_transforms['test'])
 dataloaders = torch.utils.data.DataLoader(image_datasets, batch_size=1,
                                            shuffle=False, num_workers=4)
@@ -48,7 +48,7 @@ dataset_sizes = len(image_datasets)
 
 use_gpu = torch.cuda.is_available()
 
-save_dir = '/siyuvol/dataset/kitti/ped_inst/feature_map-conv4pool/test/0'
+save_dir = '/siyuvol/dataset/kitti/greymask/feature_map-conv3pool/train/0'
 if not os.path.exists(save_dir):
 	os.makedirs(save_dir)
 
