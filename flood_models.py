@@ -175,9 +175,9 @@ class UNet2(nn.Module):
 		
 		return x
 
-class UNet_Conv3(nn.Module):
+class UNet_conv3(nn.Module):
 	def __init__(self, in_channels=256, use_bias=True, use_dropout=True):
-		super(UNet_Conv3, self).__init__()
+		super(UNet_conv3, self).__init__()
 		
 		#					input_nc,   inner_nc
 		e1_conv = nn.Conv2d(in_channels, 512, kernel_size=4, stride=2, padding=1, bias=use_bias)
@@ -242,7 +242,7 @@ class UNet_Conv3(nn.Module):
 
 def weights_init_xavier(m):
 	classname = m.__class__.__name__
-	# print(classname)
+	print(classname)
 	if classname.find('Conv') != -1:
 		init.xavier_normal(m.weight.data, gain=0.02)
 	elif classname.find('Linear') != -1:
@@ -254,10 +254,10 @@ def weights_init_xavier(m):
 def build_UNet(type='UNet1', use_bias=True, use_dropout=False, is_pretrained=False):
 	if type == 'UNet1':
 		model = UNet(use_bias=use_bias, use_dropout=use_dropout)
-	else if type == 'UNet2':
+	elif type == 'UNet2':
 		model = UNet2()
-	else if type == 'UNet1_Conv3':
-		model = UNet_Conv3()
+	elif type == 'UNet1_Conv3':
+		model = UNet_conv3(use_bias=use_bias, use_dropout=use_dropout)
 	
 	if not is_pretrained:
 		model.apply(weights_init_xavier)
@@ -265,7 +265,7 @@ def build_UNet(type='UNet1', use_bias=True, use_dropout=False, is_pretrained=Fal
 		if type == 'UNet1':
 			model.load_state_dict(torch.load('/siyuvol/py_flood/save/test3/transformer_test3_200.pth'))
 		elif type == 'UNet1_Conv3':
-			model.load_state_dict(torch.load(''))
+			model.load_state_dict(torch.load('/siyuvol/py_flood/save/test_conv3/transformer_test_conv3_30.pth'))
 			
 	return model
 	

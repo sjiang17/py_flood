@@ -20,8 +20,8 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 lr = 0.01
-training_name = 'Conv3_GREYMASK_kitti_trans_lr{}'.format(lr)
-# training_name = 'test3'
+# training_name = 'Conv3_GREYMASK_kitti_trans_lr{}'.format(lr)
+training_name = 'test_conv3'
 
 data_dir = '/siyuvol/dataset/kitti/greymask/feature_map-conv3pool/'
 featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
@@ -42,7 +42,7 @@ if not os.path.exists(save_dir):
 def train_model(model, criterion, optimizer, num_epochs=200):
     since = time.time()
     
-    for epoch in range(1, num_epochs+1):
+    for epoch in range(31, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
