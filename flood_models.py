@@ -358,6 +358,8 @@ def build_UNet(type='UNet1', use_bias=True, use_dropout=False, is_pretrained=Fal
 			model.load_state_dict(torch.load('/siyuvol/py_flood/save/test3/transformer_test3_200.pth'))
 		elif type == 'UNet1_Conv3':
 			model.load_state_dict(torch.load('/siyuvol/py_flood/save/test_conv3/transformer_test_conv3_30.pth'))
+		elif type == 'UNet1_conv3_d':
+			model.load_state_dict(torch.load('/siyuvol/py_flood/save/ConvD3_GREYMASK_kitti_trans_lr0.01/transformer_ConvD3_GREYMASK_kitti_trans_lr0.01_15.pth'))
 			
 	return model
 	
