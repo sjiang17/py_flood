@@ -50,7 +50,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
         summary_file.write("Epoch {} ".format(epoch))
         
         # Each epoch has a training and validation phase
-        for phase in ['train', 'test']:
+        for phase in ['test', 'train']:
             if phase == 'train':
                 # scheduler.step()
                 model.train(True)  # Set model to training mode
@@ -92,21 +92,38 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 # print("len of occ_crds_batch", len(occ_crds_batch))
                 
                 bs, ch, h, w = outputs.size()
-                mask_batch = torch.ones(bs, ch, h, w)
-                for occ_crds in occ_crds_batch:
-                    mask = torch.ones(h, w)
-                    # print("occ_cords of one img", type(occ_crds), len(occ_crds))
-                    for bc_ind, occ_cord in enumerate(occ_crds):
+                if bs == 1:
+                    mask_batch = torch.ones(h, w)
+                    for occ_cord in occ_crds_batch:
                         xmin = int(np.rint(w * occ_cord[0]))
                         ymin = int(np.rint(h * occ_cord[1]))
                         xmax = int(np.rint(w * occ_cord[2]))
                         ymax = int(np.rint(h * occ_cord[3]))
                         if xmax > xmin and ymax > ymin:
-                            mask[ymin:ymax, xmin:xmax] = 0
-                    mask = torch.stack([mask for mm in range(ch)], 0)
+                            mask_batch[ymin:ymax, xmin:xmax] = 0
+                    mask_batch = torch.stack([mask for mm in range(ch)], 0)
+                    mask_batch = mask.unsqueeze(0)
+                    mask_batch = torch.autograd.Variable(mask.cuda(), requires_grad=False)
+                else: 
+                    mask_batch = torch.ones(bs, ch, h, w)
+                    for occ_crds in occ_crds_batch:
+                        mask = torch.ones(h, w)
+                        # print("occ_cords of one img", type(occ_crds), len(occ_crds))
+                        for bc_ind, occ_cord in enumerate(occ_crds):
+                            # print(occ_cord)
+                        
+                            xmin = int(np.rint(w * occ_cord[0]))
+                            ymin = int(np.rint(h * occ_cord[1]))
+                            xmax = int(np.rint(w * occ_cord[2]))
+                            ymax = int(np.rint(h * occ_cord[3]))
+                            if xmax > xmin and ymax > ymin:
+                                mask[ymin:ymax, xmin:xmax] = 0
+                        
+                        #    print("bs", bs, "len of occ_crds", len(occ_crds))
+                        #    print("occ_cord", type(occ_cord), occ_cord)
                     # print("shape of a single img mask", mask.shape)
-                    mask_batch[bc_ind] = mask
-                mask_batch = torch.autograd.Variable(mask_batch.cuda(), requires_grad=False)
+                        mask_batch[bc_ind] = torch.stack([mask for mm in range(ch)], 0)
+                    mask_batch = torch.autograd.Variable(mask_batch.cuda(), requires_grad=False)
                 # print("shape of a batch mask", mask_batch.size())
 
                 loss = criterion(outputs, gt, mask_batch)

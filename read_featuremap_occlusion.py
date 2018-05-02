@@ -89,7 +89,7 @@ class FeatureReader(data.Dataset):
         assert basename == occ[0], \
             "{} not {}".format(basename, occ[0])
         masks = self.mask_loader(self.root, basename)
-
+        assert (len(masks) > 0) == (not (int(occ[1]) == 0)), "{}, {}, {}".format(basename, len(masks), occ[1])
         return fm, gt, int(occ[1]), masks
 
     def __len__(self):
