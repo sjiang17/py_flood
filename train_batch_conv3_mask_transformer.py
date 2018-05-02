@@ -17,16 +17,16 @@ from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-lr = 0.01
-training_name = 'ConvD3_GREYMASK_kitti_trans_lr{}'.format(lr)
+lr = 0.05
+training_name = 'ConvD3_Batch_GREYMASK_kitti_trans_lr{}'.format(lr)
 # training_name = 'test_conv3'
 
 data_dir = '/siyuvol/dataset/kitti/greymask/feature_map-conv3pool/'
 featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
                                           for x in ['train', 'test']}
-dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
+dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=4,
                                                 shuffle=False, num_workers=4)
                                                 for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
@@ -62,7 +62,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
             # Iterate over data.
             for ix, data in enumerate(dataloaders[phase]):
                 # get the inputs
-                inputs, gt, occ_level, occ_cords = data
+                inputs, gt, occ_level, occ_crds_batch = data
                 
                 # if occ_level.numpy()[0] == 2:
                 #     continue
@@ -88,25 +88,28 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 outputs = model(inputs)
                 # print (type(outputs))
                 # print (outputs.size())
+                # print("occ_level", occ_level, "\n")                
+                # print("len of occ_crds_batch", len(occ_crds_batch))
                 
                 bs, ch, h, w = outputs.size()
-                # occ_cords = [(0.03, 0.24, 0.63, 0.45), (0.32, 0.84, 0.43, 0.95)]
-                mask = torch.ones(h, w)
-                for occ_cord in occ_cords:
-                    xmin = int(np.rint(w * occ_cord[0]))
-                    ymin = int(np.rint(h * occ_cord[1]))
-                    xmax = int(np.rint(w * occ_cord[2]))
-                    ymax = int(np.rint(h * occ_cord[3]))
-                    if xmax > xmin and ymax > ymin:
-                        # print (xmax-xmin, ymax-ymin)
-                        mask[ymin:ymax, xmin:xmax] = 0
-                    # else:
-                        # print (xmax-xmin, ymax-ymin)
-                mask = torch.stack([mask for mm in range(ch)], 0)
-                mask = mask.unsqueeze(0)
-                mask = torch.autograd.Variable(mask.cuda(), requires_grad=False)
-                
-                loss = criterion(outputs, gt, mask)
+                mask_batch = torch.ones(bs, ch, h, w)
+                for occ_crds in occ_crds_batch:
+                    mask = torch.ones(h, w)
+                    # print("occ_cords of one img", type(occ_crds), len(occ_crds))
+                    for bc_ind, occ_cord in enumerate(occ_crds):
+                        xmin = int(np.rint(w * occ_cord[0]))
+                        ymin = int(np.rint(h * occ_cord[1]))
+                        xmax = int(np.rint(w * occ_cord[2]))
+                        ymax = int(np.rint(h * occ_cord[3]))
+                        if xmax > xmin and ymax > ymin:
+                            mask[ymin:ymax, xmin:xmax] = 0
+                    mask = torch.stack([mask for mm in range(ch)], 0)
+                    # print("shape of a single img mask", mask.shape)
+                    mask_batch[bc_ind] = mask
+                mask_batch = torch.autograd.Variable(mask_batch.cuda(), requires_grad=False)
+                # print("shape of a batch mask", mask_batch.size())
+
+                loss = criterion(outputs, gt, mask_batch)
 
                 # backward + optimize only if in training phase
                 if phase == 'train':
@@ -142,7 +145,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
     # model.load_state_dict(best_model_wts)
     return
 
-model_trans = build_UNet(type='UNet1_Conv3_d', use_dropout=True, is_pretrained=False)
+model_trans = build_UNet(type='UNet1_conv3_d', use_dropout=True, is_pretrained=False)
 if use_gpu:
     model_trans = model_trans.cuda()
 

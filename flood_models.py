@@ -301,13 +301,13 @@ class UNet_conv3_d(nn.Module):
 		else:
 			self.d4 = nn.Sequential(d4_norm, d4_relu)
 		
-		d4_conv = nn.Conv2d(512, 256, kernel_size=3, padding=1, bias=use_bias)
-		d4_relu = nn.ReLU(True)
-		self.d4 = nn.Sequential(d4_conv, d4_relu)
-		
-		d5_conv = nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=use_bias)
+		d5_conv = nn.Conv2d(512, 256, kernel_size=3, padding=1, bias=use_bias)
 		d5_relu = nn.ReLU(True)
 		self.d5 = nn.Sequential(d5_conv, d5_relu)
+		
+		d6_conv = nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=use_bias)
+		d6_relu = nn.ReLU(True)
+		self.d6 = nn.Sequential(d6_conv, d6_relu)
 		
 	def forward(self, x):
 		x_input	= x
@@ -324,14 +324,13 @@ class UNet_conv3_d(nn.Module):
 		x = self.d3(x)
 		x = self.d4_deconv(torch.cat([x_e2, x], 1), output_size=x_input.size())
 		x = self.d4(x)
-		x = self.d4(torch.cat([x_input, x], 1))
-		x = self.d5(x)
+		x = self.d5(torch.cat([x_input, x], 1))
+		x = self.d6(x)
 		
 		return x
 
 def weights_init_xavier(m):
 	classname = m.__class__.__name__
-	print(classname)
 	if classname.find('Conv') != -1:
 		init.xavier_normal(m.weight.data, gain=0.02)
 	elif classname.find('Linear') != -1:
@@ -347,9 +346,11 @@ def build_UNet(type='UNet1', use_bias=True, use_dropout=False, is_pretrained=Fal
 		model = UNet2()
 	elif type == 'UNet1_Conv3':
 		model = UNet_conv3(use_bias=use_bias, use_dropout=use_dropout)
-	elif type == 'UNet_conv3_d':
+	elif type == 'UNet1_conv3_d':
 		model = UNet_conv3_d(use_bias=use_bias, use_dropout=use_dropout)
-	
+	else:
+		print("No model type {}".format(type))
+		exit()
 	if not is_pretrained:
 		model.apply(weights_init_xavier)
 	else: 
