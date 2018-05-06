@@ -339,7 +339,7 @@ def weights_init_xavier(m):
 		init.normal(m.weight.data, 1.0, 0.02)
 		init.constant(m.bias.data, 0.0)
 
-def build_UNet(type='UNet1', use_bias=True, use_dropout=False, is_pretrained=False):
+def build_UNet(type='UNet1', use_bias=True, use_dropout=False, pretrained_model=None):
 	if type == 'UNet1':
 		model = UNet(use_bias=use_bias, use_dropout=use_dropout)
 	elif type == 'UNet2':
@@ -351,15 +351,10 @@ def build_UNet(type='UNet1', use_bias=True, use_dropout=False, is_pretrained=Fal
 	else:
 		print("No model type {}".format(type))
 		exit()
-	if not is_pretrained:
+	if pretrained_model == None:
 		model.apply(weights_init_xavier)
 	else: 
-		if type == 'UNet1':
-			model.load_state_dict(torch.load('/siyuvol/py_flood/save/test3/transformer_test3_200.pth'))
-		elif type == 'UNet1_Conv3':
-			model.load_state_dict(torch.load('/siyuvol/py_flood/save/test_conv3/transformer_test_conv3_30.pth'))
-		elif type == 'UNet1_conv3_d':
-			model.load_state_dict(torch.load('/siyuvol/py_flood/save/ConvD3_GREYMASK_kitti_trans_lr0.01/transformer_ConvD3_GREYMASK_kitti_trans_lr0.01_15.pth'))
+		model.load_state_dict(torch.load(pretrained_model))
 			
 	return model
 	

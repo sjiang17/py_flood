@@ -15,9 +15,9 @@ import copy
 from flood_models import build_UNet
 from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
+import datetime
 
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 
 lr = 0.01
 training_name = 'Deep_Conv3_GREYMASK_kitti_trans_lr{}'.format(lr)
@@ -42,7 +42,7 @@ if not os.path.exists(save_dir):
 def train_model(model, criterion, optimizer, num_epochs=200):
     since = time.time()
     
-    for epoch in range(1, num_epochs+1):
+    for epoch in range(111, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
@@ -64,8 +64,8 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 # get the inputs
                 inputs, gt, occ_level, occ_cords = data
                 
-                if occ_level.numpy()[0] == 2:
-                    continue
+                # if occ_level.numpy()[0] == 2:
+                #    continue
 
                 # wrap them in Variable
                 if use_gpu:
@@ -86,11 +86,8 @@ def train_model(model, criterion, optimizer, num_epochs=200):
 
                 # forward
                 outputs = model(inputs)
-                # print (type(outputs))
-                # print (outputs.size())
-                
+
                 bs, ch, h, w = outputs.size()
-                # occ_cords = [(0.03, 0.24, 0.63, 0.45), (0.32, 0.84, 0.43, 0.95)]
                 mask = torch.ones(h, w)
                 for occ_cord in occ_cords:
                     xmin = int(np.rint(w * occ_cord[0]))
@@ -98,10 +95,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                     xmax = int(np.rint(w * occ_cord[2]))
                     ymax = int(np.rint(h * occ_cord[3]))
                     if xmax > xmin and ymax > ymin:
-                        # print (xmax-xmin, ymax-ymin)
                         mask[ymin:ymax, xmin:xmax] = 0
-                    # else:
-                        # print (xmax-xmin, ymax-ymin)
                 mask = torch.stack([mask for mm in range(ch)], 0)
                 mask = mask.unsqueeze(0)
                 mask = torch.autograd.Variable(mask.cuda(), requires_grad=False)
@@ -117,13 +111,13 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 running_loss += iter_loss
                 
                 if ix % 100 == 0:
-                    print ('iter {}, Loss = {:.4f}'.format(ix, iter_loss))
+                    print ('{}: iter {}, Loss = {:.4f}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), ix, iter_loss))
 
             epoch_loss = running_loss / dataset_sizes[phase]
             
-            print('{} Loss: {:.4f}'.format(phase, epoch_loss))
+            print('{}, {} Loss: {:.4f}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, epoch_loss))
             
-            summary_file.write("{} loss {:.4f} ".format(phase, epoch_loss))
+            summary_file.write("{}, {} loss {:.4f} ".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, epoch_loss))
             
             if epoch == 1 or epoch % 5 == 0:
                 save_name = 'transformer_{}_{}.pth'.format(training_name ,epoch)
@@ -142,7 +136,9 @@ def train_model(model, criterion, optimizer, num_epochs=200):
     # model.load_state_dict(best_model_wts)
     return
 
-model_trans = build_UNet(type='UNet1_conv3_d', use_dropout=True, is_pretrained=True)
+# pretrained_model = './save/Deep_Conv3_GREYMASK_kitti_trans_lr0.01/transformer_Deep_Conv3_GREYMASK_kitti_trans_lr0.01_110.pth'
+pretrained_model = './save/Deep_Conv3_GREYMASK_kitti_trans_lr0.01__/transformer_Deep_Conv3_GREYMASK_kitti_trans_lr0.01___110.pth'
+model_trans = build_UNet(type='UNet1_conv3_d', use_dropout=True, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 

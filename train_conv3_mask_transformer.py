@@ -21,13 +21,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 lr = 0.01
 # training_name = 'Conv3_GREYMASK_kitti_trans_lr{}'.format(lr)
-training_name = 'test_conv3'
+training_name = 'test_conv3_worker4'
 
 data_dir = '/siyuvol/dataset/kitti/greymask/feature_map-conv3pool/'
 featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
-                                                shuffle=False, num_workers=0)
+                                                shuffle=False, num_workers=4)
                                                 for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
 print (dataset_sizes)
@@ -42,7 +42,7 @@ if not os.path.exists(save_dir):
 def train_model(model, criterion, optimizer, num_epochs=200):
     since = time.time()
     
-    for epoch in range(31, num_epochs+1):
+    for epoch in range(96, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
