@@ -3,22 +3,26 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 class my_kitti():
-	def __init__(self, dir, cls):
+	def __init__(self, dir='', cls=''):
 		self._dir = dir
-		assert os.path.exists(self._dir), 'Kitti data directory does not exist'
+		# assert os.path.exists(self._dir), 'Kitti data directory does not exist'
 		self._img_dir = os.path.join(dir, 'image_2')
 		self._annot_dir = os.path.join(dir, cls, 'annot_xml')
 		self._num_classes = 2
 		self._classes = ('__background__',  # always index 0
                      'car')
-		self._class_to_ind = dict(list(zip(self._classes, list(range(self._num_classes)))))
+		self._class_to_ind = dict(list(zip(self._classes, \
+								list(range(self._num_classes)))))
 
 	def _list_imgs(self):
-		img_files = [os.path.join(self._img_dir, f.split('.xml')[0] + '.png') for f in sorted(os.listdir(self._annot_dir)) if f.endswith('.xml')]
+		img_files = [os.path.join(self._img_dir, f.split('.xml')[0]\
+						 + '.png') for f in sorted(os.listdir(self._annot_dir)) if f.endswith('.xml')]
 		return img_files 
 
 	def _list_annots(self):
-		annot_files = [os.path.join(self._annot_dir, f) for f in sorted(os.listdir(self._annot_dir)) if f.endswith('.xml')]
+		assert os.path.exists(self._annot_dir), 'Kitti data directory does not exist: {}'.format(self._annot_dir)
+		annot_files = [os.path.join(self._annot_dir, f) for f in \
+							sorted(os.listdir(self._annot_dir)) if f.endswith('.xml')]
 		return annot_files
 
 	def _read_annot(self, annot_file):
@@ -29,6 +33,7 @@ class my_kitti():
 		boxes = np.zeros((num_objs, 4), dtype=np.uint16)
 		gt_classes = np.zeros(num_objs, dtype=np.int32)
 		occs = np.zeros(num_objs, dtype=np.int32)
+		truncs = np.zeros(num_objs, dtype=np.int32)
 
 		for ix, obj in enumerate(objs):
 			bbox = obj.find('bndbox')
@@ -40,10 +45,12 @@ class my_kitti():
 			boxes[ix, :] = [x1, y1, x2, y2]
 			gt_classes[ix] = cls
 			occs[ix] = int(obj.find('occluded').text)
+			truncs[ix] = int(obj.find('truncated').text)
 
 		return {'boxes': boxes,
 				'gt_classes': gt_classes,
-				'occluded': occs}
+				'occluded': occs,
+				'truncated': truncs}
 
 	def _modify_annot(self, annot_file, mask_areas, mask_boxes, save_dir):
 		
