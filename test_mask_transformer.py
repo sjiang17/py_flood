@@ -17,13 +17,13 @@ from read_featuremap_test import FeatureReader
 # from my_loss import L1Loss
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
 lr = 0.01
 training_name = 'PEDINST_MASK_kitti_trans_lr{}'.format(lr)
 # training_name = 'test3'
 
-data_dir = '/pvdata/dataset/image_test_loss/feature_map-conv3pool/image_unocc_untrunc'
+data_dir = '/pvdata/dataset/image_test_loss/no_resize/feature_map-conv4pool/image_unocc_untrunc'
 featuremap_datasets = FeatureReader(data_dir)
 dataloaders = torch.utils.data.DataLoader(featuremap_datasets, batch_size=1,
                                                 shuffle=False, num_workers=0)
@@ -96,7 +96,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 if ix % 100 == 0:
                     print ('iter {}, Loss = {:.4f}'.format(ix, iter_loss))
 
-            epoch_loss = running_loss / dataset_sizes[phase]
+            epoch_loss = running_loss / dataset_sizes
             
             print('{} Loss: {:.4f}'.format(phase, epoch_loss))
             
@@ -124,7 +124,7 @@ model_trans = build_UNet(type='UNet1', use_dropout=True, pretrained_model=pretra
 if use_gpu:
     model_trans = model_trans.cuda()
 
-criterion = nn.criterion.L1Loss()
+criterion = nn.L1Loss()
 optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weight_decay=0)
 # optimizer_trans = optim.Adam(model_trans.parameters(), lr=lr, weight_decay=0.0005)
 
@@ -132,4 +132,4 @@ optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weigh
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 print(training_name)
-train_model(model_trans, criterion, optimizer_trans, num_epochs=450)
+train_model(model_trans, criterion, optimizer_trans, num_epochs=1)

@@ -4,12 +4,12 @@ import os
 SCALE = 600.0
 MAX_SIZE = 1000
 
-basedirs = ['/train/0', '/train/1', '/test/0', '/test/1']
+basedirs = ['image_large_mask', 'image_small_mask', 'image_unocc_untrunc']
 
 for basedir in basedirs:
 	print basedir
-	kitti_img_dir = '/siyuvol/dataset/kitti/mask_noresize' + basedir
-	save_dir = '/siyuvol/dataset/kitti/greymask' + basedir 
+	kitti_img_dir = '/pvdata/dataset/image_test_loss/' + basedir
+	save_dir = '/pvdata/dataset/image_test_loss/resize/' + basedir 
 	if not os.path.exists(save_dir):
 		os.makedirs(save_dir)
 	kitti_img_files = [os.path.join(kitti_img_dir, f) for f in sorted(os.listdir(kitti_img_dir)) if f.endswith('.png')]

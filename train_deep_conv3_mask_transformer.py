@@ -17,10 +17,10 @@ from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "5"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 lr = 0.01
-training_name = 'Deep_Conv3_GREYMASK_kitti_trans_lr{}'.format(lr)
+training_name = '105Deep_Conv3_GREYMASK_kitti_trans_lr{}'.format(lr)
 # training_name = 'test_conv3'
 
 data_dir = '/siyuvol/dataset/kitti/greymask/feature_map-conv3pool/'
@@ -42,7 +42,7 @@ if not os.path.exists(save_dir):
 def train_model(model, criterion, optimizer, num_epochs=200):
     since = time.time()
     
-    for epoch in range(111, num_epochs+1):
+    for epoch in range(181, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
@@ -136,8 +136,8 @@ def train_model(model, criterion, optimizer, num_epochs=200):
     # model.load_state_dict(best_model_wts)
     return
 
-# pretrained_model = './save/Deep_Conv3_GREYMASK_kitti_trans_lr0.01/transformer_Deep_Conv3_GREYMASK_kitti_trans_lr0.01_110.pth'
-pretrained_model = './save/Deep_Conv3_GREYMASK_kitti_trans_lr0.01__/transformer_Deep_Conv3_GREYMASK_kitti_trans_lr0.01___110.pth'
+pretrained_model = './save/Deep_Conv3_GREYMASK_kitti_trans_lr0.01/transformer_Deep_Conv3_GREYMASK_kitti_trans_lr0.01_105.pth'
+# pretrained_model = './save/Deep_Conv3_GREYMASK_kitti_trans_lr0.01__/transformer_Deep_Conv3_GREYMASK_kitti_trans_lr0.01___150.pth'
 model_trans = build_UNet(type='UNet1_conv3_d', use_dropout=True, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
@@ -150,4 +150,4 @@ optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weigh
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 print(training_name)
-train_model(model_trans, criterion, optimizer_trans, num_epochs=450)
+train_model(model_trans, criterion, optimizer_trans, num_epochs=400)
