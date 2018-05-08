@@ -429,6 +429,8 @@ def build_UNet(type='UNet1', use_bias=True, use_dropout=False, pretrained_model=
 		model = UNet_conv3(use_bias=use_bias, use_dropout=use_dropout)
 	elif type == 'UNet1_conv3_d':
 		model = UNet_conv3_d(use_bias=use_bias, use_dropout=use_dropout)
+	elif type == 'UNet_three2one':
+		model = UNet_three2one(use_bias=use_bias, use_dropout=use_dropout)
 	else:
 		print("No model type {}".format(type))
 		exit()
