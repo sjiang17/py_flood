@@ -329,6 +329,87 @@ class UNet_conv3_d(nn.Module):
 		
 		return x
 
+class UNet_three2one(nn.Module):
+	def __init__(self, in_channels=256, use_bias=True, use_dropout=True):
+		super(UNet_three2one, self).__init__()
+
+		lrelu = nn.LeakyReLU(0.1, True)
+
+		conv3_1 = nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		conv3_2 = nn.Conv2d(512, 1024, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		self.conv3 = nn.Sequential(conv3_1, nn.BatchNorm2d(512), lrelu,
+									conv3_2, nn.BatchNorm2d(1024, affine=False), lrelu)
+
+		conv4_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=use_bias)
+		conv4_2 = nn.Conv2d(512, 1024, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		self.conv4 = nn.Sequential(conv4_1, nn.BatchNorm2d(512), lrelu,
+									conv4_2, nn.BatchNorm2d(1024, affine=False), lrelu)
+
+		conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=use_bias)
+		conv5_2 = nn.Conv2d(512, 1024, kernel_size=3, padding=1, bias=use_bias)
+		self.conv5 = nn.Sequential(conv5_1, nn.BatchNorm2d(512), lrelu,
+									conv5_2, nn.BatchNorm2d(1204, affine=False), lrelu)
+		# 32x
+		e1_conv = nn.Conv2d(1024, 1024, kernel_size=3, padding=1, bias=use_bias)
+		self.e1 = nn.Sequential(e1_conv, nn.BatchNorm2d(1024), lrelu)
+		
+		# 64x
+		e2_conv = nn.Conv2d(1024, 2048, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		self.e2 = nn.Sequential(e2_conv, nn.BatchNorm2d(2048), lrelu)
+		
+		# 128x
+		e3_conv = nn.Conv2d(2048, 4096, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		self.e3 = nn.Sequential(e3_conv, nn.BatchNorm2d(4096), lrelu)
+		
+		# e4_conv = nn.Conv2d(4096, 4096, kernel_size=3, padding=1, bias=use_bias)
+		# self.e4 = nn.Sequential(e4_conv, nn.BatchNorm2d(4096), lrelu)
+
+		self.d1_deconv = nn.ConvTranspose2d(4096, 2048, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		if use_dropout:
+			self.d1 = nn.Sequential(nn.BatchNorm2d(2048), nn.Dropout(0.5), lrelu)
+		else:
+			self.d1 = nn.Sequential(nn.BatchNorm2d(2048), lrelu)
+		
+		self.d2_deconv = nn.ConvTranspose2d(4096, 1024, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		if use_dropout:
+			self.d2 = nn.Sequential(nn.BatchNorm2d(1024), nn.Dropout(0.5), lrelu)
+		else:
+			self.d2 = nn.Sequential(nn.BatchNorm2d(1024), lrelu)
+		
+		d3_conv = nn.Conv2d(2048, 1024, kernel_size=3, padding=1, bias=use_bias)
+		if use_dropout:
+			self.d3 = nn.Sequential(d3_conv, nn.BatchNorm2d(1024), nn.Dropout(0.5), lrelu)
+		else:
+			self.d3 = nn.Sequential(d3_conv, nn.BatchNorm2d(1024), lrelu)
+		
+		d4_conv = nn.Conv2d(1024, 1024, kernel_size=3, padding=1, bias=use_bias)
+		if use_dropout:
+			self.d4 = nn.Sequential(d4_conv, nn.BatchNorm2d(1024), nn.Dropout(0.5), lrelu)
+		else:
+			self.d4 = nn.Sequential(d4_conv, nn.BatchNorm2d(1024), lrelu)
+
+		d5_conv = nn.Conv2d(1024, 1024, kernel_size=3, padding=1, bias=use_bias)
+		self.d5 = nn.Sequential(d5_conv, nn.ReLU(True))
+
+	def forward(self, x_conv3, x_conv4, x_conv5):
+		x_o3 = self.conv3(x_conv3)
+		x_o4 = self.conv4(x_conv4)
+		x_o5 = self.conv5(x_conv5)
+		x_o = x_o3 + x_o5 + x_o5
+
+		x_e1 = self.e1(x_o)
+		x_e2 = self.e2(x_e1)
+		x = self.e3(x_e2)
+		x = self.d1_deconv(x, output_size=x_e2.size())
+		x = self.d1(x)
+		x = self.d2_deconv(torch.cat([x_e2, x], 1), output_size=x_conv5.size())
+		x = self.d3(torch.cat([x_e1, x], 1))
+		x = self.d4(x)
+		x = self.d5(x)
+		
+		return x
+
+
 def weights_init_xavier(m):
 	classname = m.__class__.__name__
 	if classname.find('Conv') != -1:
