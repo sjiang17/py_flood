@@ -31,6 +31,7 @@ def mask_img(box):
 def black_patch(img, annot):
 	# for every object
 	# random mask black patch
+	prob = 0.8
 	boxes = annot['boxes']
 	gt_classes = annot['gt_classes']
 	occluded = annot['occluded']
@@ -38,7 +39,7 @@ def black_patch(img, annot):
 	mask_areas, mask_boxes = [], []
 	for (box, cls, occ) in zip(boxes, gt_classes, occluded):
 		assert cls == 1
-		if occ == 0:
+		if occ == 0 and np.random.rand() < prob:
 			mask = mask_img(box)
 			cv2.rectangle(img, (mask[0], mask[1]), (mask[2], mask[3]), (104,117,123), -1)
 		else:
@@ -66,9 +67,9 @@ if __name__ == '__main__':
 	# r_size = 512
 
 	random.seed(100)
-	kitti_dir = '/home/tmu/detection_dataset/kitti/training'
+	kitti_dir = '/siyuvol/dataset/kitti/training'
 	
-	save_dir = '/home/tmu/detection_dataset/kitti/mask_noresize'
+	save_dir = '/pvdata/dataset/kitti/vehicle/mask_resize'
 	train_dir_0 = os.path.join(save_dir, 'train/0')
 	train_dir_1 = os.path.join(save_dir, 'train/1')
 	test_dir_0 = os.path.join(save_dir, 'test/0')
@@ -87,7 +88,8 @@ if __name__ == '__main__':
 	txt_f_test = open(txt_file_test, 'w')
 	
 	
-	kitti = my_kitti(kitti_dir, 'car')
+	kitti = my_kitti(kitti_dir)
+	kitti._annot_dir = '/pvdata/dataset/kitti/vehicle/annotation'
 	# get all images 
 	img_list = kitti._list_imgs()
 	# get all annotations
@@ -100,8 +102,8 @@ if __name__ == '__main__':
 			print "processed {} out of {} images".format(ix, len(img_list))
 			
 		is_test = True if (ix % 5 == 0) else False
-		
 		img = cv2.imread(img_file)
+		img_resize_origin = cv2.resize(img, (1000, 600), interpolation=cv2.INTER_CUBIC) 
 		# get annotations 
 		annot = kitti._read_annot(annot_file)
 		# generate black patched image
@@ -123,5 +125,7 @@ if __name__ == '__main__':
 		
 		# annot_mv_file = os.path.join(annot_mv_dir, os.path.basename(annot_file))
 		# shutil.copyfile(annot_file, annot_mv_file)
-		shutil.copyfile(img_file, origin_save_file)
+		cv2.imwrite(origin_save_file, img_resize_origin)
+		# shutil.copyfile(img_file, origin_save_file)
+		img = cv2.resize(img, (1000, 600), interpolation=cv2.INTER_CUBIC)
 		cv2.imwrite(save_file, img)

@@ -7,7 +7,7 @@ class my_kitti():
 		self._dir = dir
 		# assert os.path.exists(self._dir), 'Kitti data directory does not exist'
 		self._img_dir = os.path.join(dir, 'image_2')
-		self._annot_dir = os.path.join(dir, cls, 'annot_xml')
+		self._annot_dir = os.path.join(dir, cls, 'annotation')
 		self._num_classes = 2
 		self._classes = ('__background__',  # always index 0
                      'car')
