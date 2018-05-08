@@ -330,7 +330,7 @@ class UNet_conv3_d(nn.Module):
 		return x
 
 class UNet_three2one(nn.Module):
-	def __init__(self, in_channels=256, use_bias=True, use_dropout=True):
+	def __init__(self, use_bias=True, use_dropout=True):
 		super(UNet_three2one, self).__init__()
 
 		lrelu = nn.LeakyReLU(0.1, True)
@@ -348,7 +348,7 @@ class UNet_three2one(nn.Module):
 		conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=use_bias)
 		conv5_2 = nn.Conv2d(512, 1024, kernel_size=3, padding=1, bias=use_bias)
 		self.conv5 = nn.Sequential(conv5_1, nn.BatchNorm2d(512), lrelu,
-									conv5_2, nn.BatchNorm2d(1204, affine=False), lrelu)
+									conv5_2, nn.BatchNorm2d(1024, affine=False), lrelu)
 		# 32x
 		e1_conv = nn.Conv2d(1024, 1024, kernel_size=3, padding=1, bias=use_bias)
 		self.e1 = nn.Sequential(e1_conv, nn.BatchNorm2d(1024), lrelu)
@@ -382,20 +382,20 @@ class UNet_three2one(nn.Module):
 		else:
 			self.d3 = nn.Sequential(d3_conv, nn.BatchNorm2d(1024), lrelu)
 		
-		d4_conv = nn.Conv2d(1024, 1024, kernel_size=3, padding=1, bias=use_bias)
+		d4_conv = nn.Conv2d(1024, 512, kernel_size=3, padding=1, bias=use_bias)
 		if use_dropout:
-			self.d4 = nn.Sequential(d4_conv, nn.BatchNorm2d(1024), nn.Dropout(0.5), lrelu)
+			self.d4 = nn.Sequential(d4_conv, nn.BatchNorm2d(512), nn.Dropout(0.5), lrelu)
 		else:
-			self.d4 = nn.Sequential(d4_conv, nn.BatchNorm2d(1024), lrelu)
+			self.d4 = nn.Sequential(d4_conv, nn.BatchNorm2d(512), lrelu)
 
-		d5_conv = nn.Conv2d(1024, 1024, kernel_size=3, padding=1, bias=use_bias)
+		d5_conv = nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=use_bias)
 		self.d5 = nn.Sequential(d5_conv, nn.ReLU(True))
 
 	def forward(self, x_conv3, x_conv4, x_conv5):
 		x_o3 = self.conv3(x_conv3)
 		x_o4 = self.conv4(x_conv4)
 		x_o5 = self.conv5(x_conv5)
-		x_o = x_o3 + x_o5 + x_o5
+		x_o = x_o3 + x_o4 + x_o5
 
 		x_e1 = self.e1(x_o)
 		x_e2 = self.e2(x_e1)
@@ -412,13 +412,17 @@ class UNet_three2one(nn.Module):
 
 def weights_init_xavier(m):
 	classname = m.__class__.__name__
+	print(classname)
 	if classname.find('Conv') != -1:
 		init.xavier_normal(m.weight.data, gain=0.02)
 	elif classname.find('Linear') != -1:
 		init.xavier_normal(m.weight.data, gain=0.02)
 	elif classname.find('BatchNorm2d') != -1:
-		init.normal(m.weight.data, 1.0, 0.02)
-		init.constant(m.bias.data, 0.0)
+		try: 
+			init.normal(m.weight.data, 1.0, 0.02)
+			init.constant(m.bias.data, 0.0)
+		except:
+			pass
 
 def build_UNet(type='UNet1', use_bias=True, use_dropout=False, pretrained_model=None):
 	if type == 'UNet1':

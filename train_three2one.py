@@ -13,15 +13,15 @@ import time
 import os
 import copy
 from flood_models import build_UNet
-from read_featuremap_occlusion import FeatureReader
+from read_featuremap_three2one import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-lr = 0.0001
-# training_name = 'Three2one_GREYMASK_kitti_trans_lr{}'.format(lr)
-training_name = 'Three2one_test'
+lr = 0.01
+training_name = 'Three2one_GREYMASK_kitti_trans_lr{}'.format(lr)
+# training_name = 'Three2one_test'
 
 data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize'
 featuremap_datasets = {x: FeatureReader(data_dir, phase=x)
@@ -38,7 +38,7 @@ save_dir = os.path.join('save', training_name)
 if not os.path.exists(save_dir):
 	os.makedirs(save_dir)
 
-def get_Variable(var, use_gpu):
+def get_Variable(var, phase, use_gpu):
     if use_gpu:
         if phase == 'train':
             var = Variable(var.cuda())
@@ -49,6 +49,7 @@ def get_Variable(var, use_gpu):
             var = Variable(var)
         else:
             var = Variable(var, volatile=True)
+    return var
 
 def train_model(model, criterion, optimizer, num_epochs=200):
     since = time.time()
@@ -79,10 +80,10 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 #    continue
 
                 # wrap them in Variable
-                fm_conv3 = get_Variable(fm_conv3, use_gpu)
-                fm_conv4 = get_Variable(fm_conv4, use_gpu)
-                fm_conv5 = get_Variable(fm_conv5, use_gpu)
-                gt = get_Variable(gt, use_gpu)
+                fm_conv3 = get_Variable(fm_conv3, phase, use_gpu)
+                fm_conv4 = get_Variable(fm_conv4, phase, use_gpu)
+                fm_conv5 = get_Variable(fm_conv5, phase, use_gpu)
+                gt = get_Variable(gt, phase, use_gpu)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -122,7 +123,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
             
             summary_file.write("{}, {} loss {:.4f} ".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, epoch_loss))
             
-            if epoch == 1 or epoch % 5 == 0:
+            if epoch % 10 == 0:
                 save_name = 'transformer_{}_{}.pth'.format(training_name ,epoch)
                 torch.save(model.state_dict(), os.path.join(save_dir, save_name))
         
