@@ -337,8 +337,8 @@ class UNet_three2one(nn.Module):
 
 		conv3_1 = nn.Conv2d(256, 256, kernel_size=3, padding=1, bias=use_bias)
 		conv3_2 = nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1, bias=use_bias)
-		self.conv3 = nn.Sequential(conv3_1, nn.BatchNorm2d(512), lrelu,
-									conv3_2, nn.BatchNorm2d(1024, affine=False), lrelu)
+		self.conv3 = nn.Sequential(conv3_1, nn.BatchNorm2d(256), lrelu,
+									conv3_2, nn.BatchNorm2d(512, affine=False), lrelu)
 
 		conv4_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=use_bias)
 		conv4_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=use_bias)
@@ -350,7 +350,7 @@ class UNet_three2one(nn.Module):
 		self.conv5 = nn.Sequential(conv5_1, nn.BatchNorm2d(512), lrelu,
 									conv5_2, nn.BatchNorm2d(512, affine=False), lrelu)
 		# 16x
-		e1_conv = nn.Conv2d(521, 512, kernel_size=3, padding=1, bias=use_bias)
+		e1_conv = nn.Conv2d(512, 512, kernel_size=3, padding=1, bias=use_bias)
 		self.e1 = nn.Sequential(e1_conv, nn.BatchNorm2d(512), lrelu)
 		
 		# 32x

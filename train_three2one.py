@@ -17,9 +17,9 @@ from read_featuremap_three2one import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
-lr = 0.01
+lr = 0.0001
 training_name = 'Three2one_GREYMASK_kitti_trans_lr{}'.format(lr)
 # training_name = 'Three2one_test'
 
@@ -27,7 +27,7 @@ data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize'
 featuremap_datasets = {x: FeatureReader(data_dir, phase=x)
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
-                                                shuffle=True, num_workers=4)
+                                                shuffle=True, num_workers=6)
                                                 for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
 print (dataset_sizes)
@@ -123,7 +123,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
             
             summary_file.write("{}, {} loss {:.4f} ".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, epoch_loss))
             
-            if epoch % 10 == 0:
+            if epoch == 1 or epoch % 10 == 0:
                 save_name = 'transformer_{}_{}.pth'.format(training_name ,epoch)
                 torch.save(model.state_dict(), os.path.join(save_dir, save_name))
         
