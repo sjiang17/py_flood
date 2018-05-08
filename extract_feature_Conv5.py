@@ -11,7 +11,7 @@ from torchvision import datasets, transforms
 import time
 import os
 import copy
-from truncated_vgg import vgg_tr_conv4
+from truncated_vgg import vgg_tr_conv5
 # try:
 # 	import cPickle as pickle 
 # except:
@@ -20,7 +20,7 @@ import h5py
 from image_reader import ImageFolder
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 data_transforms = {
     'train': transforms.Compose([
@@ -77,7 +77,7 @@ def extract_model(model, criterion=None, optimizer=None, num_epochs=25):
     return 
 
 for subdir in ['train/0', 'train/1', 'test/0', 'test/1']:
-
+    
     data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/' + subdir
     image_datasets = ImageFolder(data_dir, data_transforms['test'])
     dataloaders = torch.utils.data.DataLoader(image_datasets, batch_size=1,
@@ -86,11 +86,11 @@ for subdir in ['train/0', 'train/1', 'test/0', 'test/1']:
 
     use_gpu = torch.cuda.is_available()
 
-    save_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map-conv4pool/' + subdir
+    save_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map-conv5pool/' + subdir
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    model_ft = vgg_tr_conv4(num_classes=2 ,pretrained=True, defualt_input_size=600)
+    model_ft = vgg_tr_conv5(num_classes=2 ,pretrained=True, defualt_input_size=600)
     if use_gpu:
         model_ft = model_ft.cuda()
 
