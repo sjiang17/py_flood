@@ -406,6 +406,7 @@ class UNet_three2one(nn.Module):
 		x = self.d1_deconv(x, output_size=x_e2.size())
 		x = self.d1(x)
 		x = self.d2_deconv(torch.cat([x_e2, x], 1), output_size=x_conv5.size())
+		x = self.d2(x)
 		x = self.d3(torch.cat([x_e1, x], 1))
 		x = self.d4(x)
 		
