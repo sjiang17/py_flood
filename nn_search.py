@@ -10,7 +10,7 @@ from torchvision import datasets
 import time
 import os
 import copy
-import datatime
+import datetime
 from flood_models import build_UNet
 from read_featuremap_test import FeatureReader
 

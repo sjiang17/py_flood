@@ -17,9 +17,9 @@ from read_featuremap_three2one import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-lr = 0.0001
+lr = 0.01
 training_name = 'Three2one_GREYMASK_kitti_trans_lr{}'.format(lr)
 # training_name = 'Three2one_test'
 
