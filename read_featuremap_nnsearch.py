@@ -14,11 +14,11 @@ def make_dataset(dir):
     dir = os.path.expanduser(dir)
     if (not os.path.isdir(dir)):
         raise(RuntimeError("directory not correct!"))
-    for fname in sorted(os.listdir(conv5_d0)):
+    for fname in sorted(os.listdir(dir)):
         if is_featuremap_file(fname):
             fm_path = os.path.join(dir, fname)
             assert os.path.exists(fm_path)
-            item = path_conv3
+            item = fm_path
             feature_maps.append(item)
 
     return feature_maps
@@ -61,7 +61,6 @@ class FeatureReader(data.Dataset):
         feature_maps = make_dataset(root)
         if len(feature_maps) == 0:
             raise(RuntimeError("Found 0 feature maps in subfolders of: " + root + "\n"))
-        assert len(occ_level) == len(feature_maps)
         self.root = root
         self.feature_maps = feature_maps
         self.loader = loader
