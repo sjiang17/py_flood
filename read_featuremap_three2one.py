@@ -47,7 +47,7 @@ def mask_loader(dir, basename):
     masks = []
     for ix, obj in enumerate(objs):
         occ_level = int(obj.find('occluded').text)
-	trunc = int(obj.find('truncated').text)
+        trunc = int(obj.find('truncated').text)
         if occ_level == 0 and trunc == 0:
             continue
         bbox = obj.find('bndbox')
