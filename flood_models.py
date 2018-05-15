@@ -74,7 +74,74 @@ class UNet(nn.Module):
 		
 		return x
 			
-	# def _initialize_weights(self):
+class UNet_conv4(nn.Module):
+	def __init__(self, use_bias=True, use_dropout=True):
+		super(UNet_conv4, self).__init__()
+
+		lrelu = nn.LeakyReLU(0.1, True)
+
+		c1_conv = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=use_bias)
+		c1_norm = nn.BatchNorm2d(512)
+		self.c1 = nn.Sequential(c1_conv, c1_norm, lrelu)
+
+		e1_conv = nn.Conv2d(512, 512, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		e1_norm = nn.BatchNorm2d(512) 
+		self.e1 = nn.Sequential(e1_conv, e1_norm, lrelu)
+		
+		e2_conv = nn.Conv2d(512, 1024, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		e2_norm = nn.BatchNorm2d(1024)
+		self.e2 = nn.Sequential(e2_conv, e2_norm, lrelu)
+		
+		e3_conv = nn.Conv2d(1024, 2048, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		self.e3 = nn.Sequential(e3_conv, lrelu)
+		
+		self.d1_deconv = nn.ConvTranspose2d(2048, 1024, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		d1_norm = nn.BatchNorm2d(1024)
+		if use_dropout:
+			self.d1 = nn.Sequential(d1_norm, nn.Dropout(0.5), lrelu)
+		else:
+			self.d1 = nn.Sequential(d1_norm, lrelu)
+		
+		self.d2_deconv = nn.ConvTranspose2d(2048, 512, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		d2_norm = nn.BatchNorm2d(512)
+		if use_dropout:
+			self.d2 = nn.Sequential(d2_norm, nn.Dropout(0.5), lrelu)
+		else:
+			self.d2 = nn.Sequential(d2_norm, lrelu)
+		
+		self.d3_deconv = nn.ConvTranspose2d(1024, 512, kernel_size=4, stride=2, padding=1, bias=use_bias)
+		d3_norm = nn.BatchNorm2d(512)
+		if use_dropout:
+			self.d3 = nn.Sequential(d3_norm, nn.Dropout(0.5), lrelu)
+		else:
+			self.d3 = nn.Sequential(d3_norm, lrelu)
+		
+		d4_conv = nn.Conv2d(1024, 512, kernel_size=3, stride=1, padding=1, bias=use_bias)
+		d4_norm = nn.BatchNorm2d(512)
+		self.d4 = nn.Sequential(d4_conv, d4_norm, lrelu)
+
+		d5_conv = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=use_bias)
+		d5_relu = nn.ReLU(True)
+		self.d5 = nn.Sequential(d5_conv, d5_relu)
+		
+		
+	def forward(self, x):
+		x_input	= x
+		x = self.c1(x)
+		x_e1 = self.e1(x)
+		x_e2 = self.e2(x_e1)
+		x = self.e3(x_e2)
+		x = self.d1_deconv(x, output_size=x_e2.size())
+		x = self.d1(x)
+		x = self.d2_deconv(torch.cat([x_e2, x], 1), output_size=x_e1.size())
+		x = self.d2(x)
+		x = self.d3_deconv(torch.cat([x_e1, x], 1), output_size=x_input.size())
+		x = self.d3(x)
+		x = self.d4(torch.cat([x_input, x], 1))
+		x = self.d5(x)
+		
+		return x
+
 class UNet2(nn.Module):
 	def __init__(self, in_channels=512, use_bias=True, use_dropout=False):
 		super(UNet2, self).__init__()
@@ -436,6 +503,8 @@ def build_UNet(type='UNet1', use_bias=True, use_dropout=False, pretrained_model=
 		model = UNet_conv3(use_bias=use_bias, use_dropout=use_dropout)
 	elif type == 'UNet1_conv3_d':
 		model = UNet_conv3_d(use_bias=use_bias, use_dropout=use_dropout)
+	elif type == 'UNet_conv4':
+		model = UNet_conv4(use_bias=use_bias, use_dropout=use_dropout)
 	elif type == 'UNet_three2one':
 		model = UNet_three2one(use_bias=use_bias, use_dropout=use_dropout)
 	else:
