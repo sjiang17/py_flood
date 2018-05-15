@@ -70,16 +70,15 @@ cfg = {
     'CONV5': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512]
 }
 
-def vgg_tr_conv4(pretrained=False, **kwargs):
+def vgg_tr_conv4(pretrained_model=None, **kwargs):
 	
-    if pretrained:
+    if pretrained_model:
         kwargs['init_weights'] = False
     model = VGG_tr(make_layers(cfg['CONV4']), **kwargs)
-    if pretrained:
+    if pretrained_model:
         # model.load_state_dict(model_zoo.load_url(model_urls['vgg16']))
         # pretrained_dict = model_zoo.load_url(model_urls['vgg16'])
-        pretrianed_model_dir = '/siyuvol/pytorch-model/vgg16/pascal_voc/faster_rcnn_1_10_625.pth'
-        pretrained_dict = torch.load(pretrianed_model_dir)['model']
+        pretrained_dict = torch.load(pretrained_model)['model']
         model_dict = model.state_dict()
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
         for kk in pretrained_dict:
