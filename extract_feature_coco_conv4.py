@@ -20,7 +20,7 @@ import h5py
 from caffe_image_reader import ImageFolder
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # data_transforms = {
 #     'test': transforms.Compose([
@@ -67,7 +67,7 @@ def extract_model(model, criterion=None, optimizer=None, num_epochs=1):
     
     return 
 
-for subdir in ['test/0']:
+for subdir in ['test/0', 'test/1', 'train/0', 'train/1']:
 
     data_dir = '/fldata/dataset/coco/mask/' + subdir
     image_datasets = ImageFolder(data_dir)
@@ -77,7 +77,7 @@ for subdir in ['test/0']:
 
     use_gpu = torch.cuda.is_available()
 
-    save_dir = '/fldata/dataset/coco/mask/feature_map-conv4pool_test/' + subdir
+    save_dir = '/fldata/dataset/coco/mask/feature_map-conv4pool-caffe/' + subdir
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     pretrained_model = '/fldata/pytorch-model/faster_rcnn_vgg16_coco-jwy.pth'
