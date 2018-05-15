@@ -17,19 +17,19 @@ from truncated_vgg import vgg_tr_conv4
 # except:
 # 	import pickle
 import h5py
-from image_reader import ImageFolder
+from caffe_image_reader import ImageFolder
 
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
-data_transforms = {
-    'test': transforms.Compose([
-        transforms.Resize(600),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ]),
-}
-
+# data_transforms = {
+#     'test': transforms.Compose([
+#         transforms.Resize(600),
+#         transforms.ToTensor(),
+#         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+#     ]),
+# }
+# 
 def extract_model(model, criterion=None, optimizer=None, num_epochs=1):
     since = time.time()
 
@@ -67,17 +67,17 @@ def extract_model(model, criterion=None, optimizer=None, num_epochs=1):
     
     return 
 
-for subdir in ['val/0', 'train/0', 'train/1']:
+for subdir in ['test/0']:
 
     data_dir = '/fldata/dataset/coco/mask/' + subdir
-    image_datasets = ImageFolder(data_dir, data_transforms['test'])
+    image_datasets = ImageFolder(data_dir)
     dataloaders = torch.utils.data.DataLoader(image_datasets, batch_size=1,
                                                shuffle=False, num_workers=4)
     dataset_sizes = len(image_datasets)
 
     use_gpu = torch.cuda.is_available()
 
-    save_dir = '/fldata/dataset/coco/mask/feature_map-conv4pool/' + subdir
+    save_dir = '/fldata/dataset/coco/mask/feature_map-conv4pool_test/' + subdir
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     pretrained_model = '/fldata/pytorch-model/faster_rcnn_vgg16_coco-jwy.pth'

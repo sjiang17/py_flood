@@ -4,7 +4,9 @@ from PIL import Image
 import os
 import os.path
 from scipy.misc import imread
-
+import numpy as np
+import cv2
+import torch 
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
 
@@ -58,6 +60,8 @@ def image_loader(path):
     # im = imresize(im, im_scale)
     im = cv2.resize(im, None, None, fx=im_scale, fy=im_scale,
                     interpolation=cv2.INTER_LINEAR)
+    im = torch.from_numpy(im)
+    im = im.permute(2, 0, 1).contiguous()
     return im
 
 def pil_loader(path):
@@ -94,8 +98,6 @@ class ImageFolder(data.Dataset):
 
         self.root = root
         self.imgs = imgs
-        self.classes = classes
-        self.class_to_idx = class_to_idx
         # self.transform = transform
         # self.target_transform = target_transform
         self.loader = loader
