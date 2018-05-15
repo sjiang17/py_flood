@@ -15,7 +15,7 @@ def make_dataset(dir):
     d0 = os.path.join(dir, '0')
     d1 = os.path.join(dir, '1')
     if (not os.path.isdir(d0)) or (not os.path.isdir(d1)):
-        raise(RuntimeError("directory not correct!"))
+        raise(RuntimeError("{} directory not correct!".format(d0)))
     for fname in sorted(os.listdir(d0)):        
         if is_featuremap_file(fname):
             path0 = os.path.join(d0, fname)
