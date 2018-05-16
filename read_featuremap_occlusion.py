@@ -35,7 +35,7 @@ def get_occlusion_level(dir):
 
 def mask_loader(dir, basename):
     # annot_files = [f for f in sorted(os.path.listdir(dir) if f.endswith('.xml'))]
-    annot_file = os.path.join(os.path.expanduser(dir), '../../masked_annotations',basename + '.xml')
+    annot_file = os.path.join(os.path.expanduser(dir), '../../../masked_annotations',basename + '.xml')
     tree = ET.parse(annot_file)
     width = float(tree.find('size').find('width').text)
     height = float(tree.find('size').find('height').text)

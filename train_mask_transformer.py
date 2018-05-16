@@ -15,19 +15,19 @@ import copy
 from flood_models import build_UNet
 from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
+import datetime
 
-import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 lr = 0.01
-training_name = 'PEDINST_MASK_kitti_trans_lr{}'.format(lr)
+training_name = 'caf_GREYMASK_kitti_trans_lr_NewConv4Net{}'.format(lr)
 # training_name = 'test3'
 
-data_dir = '/siyuvol/dataset/kitti/ped_inst/feature_map-conv4pool/'
+data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map_caffe/feature_map-conv4pool/'
 featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
-                                                shuffle=False, num_workers=0)
+                                                shuffle=False, num_workers=8)
                                                 for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
 print (dataset_sizes)
@@ -39,10 +39,10 @@ if not os.path.exists(save_dir):
 	os.makedirs(save_dir)
 
 
-def train_model(model, criterion, optimizer, num_epochs=200):
+def train_model(model, criterion, optimizer, num_epochs):
     since = time.time()
     
-    for epoch in range(311, num_epochs+1):
+    for epoch in range(1, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
@@ -64,8 +64,8 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 # get the inputs
                 inputs, gt, occ_level, occ_cords = data
                 
-                if occ_level.numpy()[0] == 2:
-                    continue
+                # if occ_level.numpy()[0] == 2:
+                #    continue
 
                 # wrap them in Variable
                 if use_gpu:
@@ -86,8 +86,6 @@ def train_model(model, criterion, optimizer, num_epochs=200):
 
                 # forward
                 outputs = model(inputs)
-                # print (type(outputs))
-                # print (outputs.size())
                 
                 bs, ch, h, w = outputs.size()
                 # occ_cords = [(0.03, 0.24, 0.63, 0.45), (0.32, 0.84, 0.43, 0.95)]
@@ -98,10 +96,7 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                     xmax = int(np.rint(w * occ_cord[2]))
                     ymax = int(np.rint(h * occ_cord[3]))
                     if xmax > xmin and ymax > ymin:
-                        # print (xmax-xmin, ymax-ymin)
                         mask[ymin:ymax, xmin:xmax] = 0
-                    # else:
-                        # print (xmax-xmin, ymax-ymin)
                 mask = torch.stack([mask for mm in range(ch)], 0)
                 mask = mask.unsqueeze(0)
                 mask = torch.autograd.Variable(mask.cuda(), requires_grad=False)
@@ -117,15 +112,15 @@ def train_model(model, criterion, optimizer, num_epochs=200):
                 running_loss += iter_loss
                 
                 if ix % 100 == 0:
-                    print ('iter {}, Loss = {:.4f}'.format(ix, iter_loss))
+                    print ('{}: iter {}, Loss = {:.4f}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), ix, iter_loss))
 
             epoch_loss = running_loss / dataset_sizes[phase]
             
-            print('{} Loss: {:.4f}'.format(phase, epoch_loss))
+            print('{}, {} Loss: {:.4f}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, epoch_loss))
             
-            summary_file.write("{} loss {:.4f} ".format(phase, epoch_loss))
+            summary_file.write("{}, {} loss {:.4f} ".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, epoch_loss))
             
-            if epoch == 1 or epoch % 5 == 0:
+            if epoch == 1 or epoch % 10 == 0:
                 save_name = 'transformer_{}_{}.pth'.format(training_name ,epoch)
                 torch.save(model.state_dict(), os.path.join(save_dir, save_name))
         
@@ -142,7 +137,8 @@ def train_model(model, criterion, optimizer, num_epochs=200):
     # model.load_state_dict(best_model_wts)
     return
 
-model_trans = build_UNet(type='UNet1', use_dropout=True, is_pretrained=True)
+pretrained_model = None
+model_trans = build_UNet(type='UNet_conv4', use_dropout=True, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 
@@ -154,4 +150,4 @@ optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weigh
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 print(training_name)
-train_model(model_trans, criterion, optimizer_trans, num_epochs=450)
+train_model(model_trans, criterion, optimizer_trans, num_epochs=400)

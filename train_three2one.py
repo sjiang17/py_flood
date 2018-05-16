@@ -17,13 +17,13 @@ from read_featuremap_three2one import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 lr = 0.05
-training_name = 'Three2one_GREYMASK_kitti_trans_lr{}'.format(lr)
+training_name = 'Three2one_GREYMASK_kitti_trans_lr{}_contd'.format(lr)
 # training_name = 'Three2one_test'
 
-data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize'
+data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map'
 featuremap_datasets = {x: FeatureReader(data_dir, phase=x)
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
@@ -54,7 +54,7 @@ def get_Variable(var, phase, use_gpu):
 def train_model(model, criterion, optimizer, num_epochs=200):
     since = time.time()
     
-    for epoch in range(181, num_epochs+1):
+    for epoch in range(261, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
@@ -140,8 +140,9 @@ def train_model(model, criterion, optimizer, num_epochs=200):
     # model.load_state_dict(best_model_wts)
     return
 
-pretrained_model = './save/Three2one_GREYMASK_kitti_trans_lr0.01/transformer_Three2one_GREYMASK_kitti_trans_lr0.01_180.pth'
-model_trans = build_UNet(type='UNet_three2one', use_dropout=True, pretrained_model=None)
+# pretrained_model = './save/Three2one_GREYMASK_kitti_trans_lr0.01/transformer_Three2one_GREYMASK_kitti_trans_lr0.01_180.pth'
+pretrained_model = '/siyuvol/py_flood/save/Three2one_GREYMASK_kitti_trans_lr0.05_contd/transformer_Three2one_GREYMASK_kitti_trans_lr0.05_contd_260.pth'
+model_trans = build_UNet(type='UNet_three2one', use_dropout=True, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 
