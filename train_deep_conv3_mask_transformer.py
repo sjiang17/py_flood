@@ -39,10 +39,10 @@ if not os.path.exists(save_dir):
 	os.makedirs(save_dir)
 
 
-def train_model(model, criterion, optimizer, num_epochs=200):
+def train_model(model, criterion, optimizer, num_epochs):
     since = time.time()
     
-    for epoch in range(181, num_epochs+1):
+    for epoch in range(1, num_epochs+1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
 
