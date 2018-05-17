@@ -42,7 +42,6 @@ def train_model(model, criterion, optimizer, num_epochs):
             for ix, data in enumerate(dataloaders[phase]):
                 # get the fm
                 fm, gt, _ = data
-                print (gt.size())
                 
                 # wrap them in Variable
                 if use_gpu:
@@ -63,7 +62,6 @@ def train_model(model, criterion, optimizer, num_epochs):
 
                 # forward
                 outputs = model(fm)
-                print(outputs.size())
                 loss = criterion(outputs, gt)
 
                 # backward + optimize only if in training phase
@@ -101,14 +99,16 @@ lr = 0.01
 training_name = 'fm2img_conv4_lr{}_wd'.format(lr)
 # training_name = 'test_conv3'
 
-fm_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/train/0'
-img_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map/feature_map-conv4pool/train/0'
+img_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/'
+fm_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map/feature_map-conv4pool/'
 
 # Converts a PIL Image or numpy.ndarray (H x W x C) in the range [0, 255] 
 # to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0]
 data_transforms = transforms.Compose([transforms.ToTensor()])
 
-featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x), data_transforms)
+featuremap_datasets = {x: FmImgReader(os.path.join(img_dir, x, '0'),
+					os.path.join(fm_dir,x, '0'), 
+					transform=data_transforms)
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
                                                 shuffle=False, num_workers=6)

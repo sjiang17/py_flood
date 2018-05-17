@@ -38,11 +38,11 @@ class DecoderNet(nn.Module):
 
 	def forward(self, x):
 		img_size = (600, 1000)
-		x = self.deconv1(x)
+		x = self.deconv1(x, output_size=(75, 125))
 		x = self.d1(x)
-		x = self.deconv2(x)
+		x = self.deconv2(x, output_size=(150, 250))
 		x = self.d2(x)
-		x = self.deconv3(x)
+		x = self.deconv3(x, output_size=(300, 500))
 		x = self.deconv4(x, output_size=img_size)
 		x = self.conv5(x)
 		return x

@@ -1,8 +1,9 @@
 import torch.utils.data as data
-
+import numpy as np
 from PIL import Image
 import os
 import os.path
+import h5py
 
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
 
@@ -24,12 +25,12 @@ def make_dataset(img_dir, fm_dir):
     assert (os.path.exists(fm_dir) and os.path.exists(img_dir))
 
     for fname in sorted(os.listdir(fm_dir)):        
-        if is_featuremap_file(fname):
-            fm_path = os.path.join(fm_dir, fname)
-            img_path = os.path.join(img_dir, fname)
-            assert (os.path.exists(fm_path) and os.path.exists(img_path))
-            item = (fm_path, img_path)
-            data_list.append(item)
+        fm_path = os.path.join(fm_dir, fname)
+        img_path = os.path.join(img_dir, fname.strip('.h5'))
+        assert (os.path.exists(fm_path)) 
+	assert (os.path.exists(img_path)), img_path 
+        item = (fm_path, img_path)
+        data_list.append(item)
 
     return data_list
 
@@ -61,7 +62,7 @@ def h5_loader(path):
     assert path.endswith('.h5')
     return np.array(h5py.File(path, 'r')['data'])
 
-class ImageFolder(data.Dataset):
+class FmImgReader(data.Dataset):
     """A generic data loader where the images are arranged in this way: ::
         root/dog/xxx.png
         root/dog/xxy.png
@@ -85,10 +86,10 @@ class ImageFolder(data.Dataset):
     def __init__(self, img_dir, fm_dir, transform=None, img_loader=default_loader, fm_loader=h5_loader):
         data_list = make_dataset(img_dir, fm_dir)
         if len(data_list) == 0:
-            raise(RuntimeError("Found 0 images in subfolders of: " + root + "\n"
+            raise(RuntimeError("Found 0 images in subfolders of: " + img_dir + "\n"
                                "Supported image extensions are: " + ",".join(IMG_EXTENSIONS)))
 
-        self.root = root
+        self.img_dir = img_dir
         self.data_list = data_list
         self.transform = transform
         self.img_loader = img_loader
@@ -111,12 +112,12 @@ class ImageFolder(data.Dataset):
         return fm, img, basename
 
     def __len__(self):
-        return len(self.imgs)
+        return len(self.data_list)
 
     def __repr__(self):
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
         fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
-        fmt_str += '    Root Location: {}\n'.format(self.root)
+        fmt_str += '    Root Location: {}\n'.format(self.img_dir)
         tmp = '    Transforms (if any): '
         fmt_str += '{0}{1}\n'.format(tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         tmp = '    Target Transforms (if any): '

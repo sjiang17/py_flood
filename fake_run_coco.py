@@ -16,7 +16,7 @@ from flood_models import build_UNet
 from read_featuremap import FeatureReader
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def train_model(model, criterion, optimizer, num_epochs):
     since = time.time()
