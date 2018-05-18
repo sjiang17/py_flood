@@ -25,7 +25,7 @@ def train_model(model, criterion, optimizer, num_epochs):
     epoch = 1
     print('-' * 10)
 
-    phase == 'test':
+    phase = 'test'
 
     model.train(False)  # Set model to evaluate mode
 
@@ -48,9 +48,9 @@ def train_model(model, criterion, optimizer, num_epochs):
         # forward
         outputs = model(fm)
 
-        outputs_save_file = os.path.join(output_save_dir, base_name)
-        img = transforms.ToPILImage(outputs.data[0].cpu())
-        img.save(outputs_save_file, format='jpg')
+        outputs_save_file = os.path.join(output_save_dir, base_name[0])
+        img = transforms.ToPILImage()(outputs.data[0].cpu()).convert('RGB')
+        img.save(outputs_save_file, format='JPEG')
 
         loss = criterion(outputs, gt)
 
