@@ -105,7 +105,7 @@ class FmImgReader(data.Dataset):
         fm_path, img_path = self.data_list[index]
         fm = self.fm_loader(fm_path)
         img = self.img_loader(img_path)
-        basename = os.path.basename(fm_path).strip('.xml')
+        basename = os.path.basename(img_path)
         if self.transform is not None:
             img = self.transform(img)
 
