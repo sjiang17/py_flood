@@ -20,7 +20,7 @@ from PIL import Image
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-def train_model(model, model_trans criterion, optimizer, num_epochs):
+def train_model(model, model_trans, criterion, optimizer, num_epochs):
     since = time.time()
     
     epoch = 1
@@ -118,5 +118,5 @@ optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weigh
 # Decay LR by a factor of 0.1 every 7 epochs
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
-print(pretrained_model)
+print(fea2img_pretrained_model)
 train_model(model_fea2img, model_trans, criterion, optimizer_trans, num_epochs=400)

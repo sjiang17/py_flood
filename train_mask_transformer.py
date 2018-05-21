@@ -17,17 +17,17 @@ from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 lr = 0.01
-training_name = 'caf_GREYMASK_kitti_trans_lr_NewConv4Net{}'.format(lr)
+training_name = 'caf_GREYMASK_kitti_trans_lr{}_'.format(lr)
 # training_name = 'test3'
 
 data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map_caffe/feature_map-conv4pool/'
 featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
-                                                shuffle=False, num_workers=8)
+                                                shuffle=False, num_workers=6)
                                                 for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
 print (dataset_sizes)
@@ -138,7 +138,7 @@ def train_model(model, criterion, optimizer, num_epochs):
     return
 
 pretrained_model = None
-model_trans = build_UNet(type='UNet_conv4', use_dropout=True, pretrained_model=pretrained_model)
+model_trans = build_UNet(type='UNet1', use_dropout=True, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 
