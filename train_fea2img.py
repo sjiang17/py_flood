@@ -12,15 +12,11 @@ import matplotlib.pyplot as plt
 import time
 import os
 import copy
-from flood_models import build_UNet
-from read_featuremap import FeatureReader
+from fea2img_model import build_model
+from fea2img_reader import FmImgReader
 import datetime
 
-<<<<<<< HEAD
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-=======
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
->>>>>>> 74f151c7767f72c9025efc1b8ec791912f80c708
 
 def train_model(model, criterion, optimizer, num_epochs):
     since = time.time()
@@ -45,7 +41,7 @@ def train_model(model, criterion, optimizer, num_epochs):
             # Iterate over data.
             for ix, data in enumerate(dataloaders[phase]):
                 # get the fm
-                fm, gt = data
+                fm, gt, _ = data
                 
                 # wrap them in Variable
                 if use_gpu:
@@ -85,9 +81,9 @@ def train_model(model, criterion, optimizer, num_epochs):
             
             summary_file.write("{}, {} loss {:.4f} ".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, epoch_loss))
             
-            # if epoch == 1 or epoch % 10 == 0:
-            #     save_name = 'transformer_{}_{}.pth'.format(training_name ,epoch)
-            #     torch.save(model.state_dict(), os.path.join(save_dir, save_name))
+            if epoch == 1 or epoch % 10 == 0:
+                save_name = 'transformer_{}_{}.pth'.format(training_name ,epoch)
+                torch.save(model.state_dict(), os.path.join(save_dir, save_name))
         
         summary_file.write("\n")
         summary_file.close()
@@ -99,15 +95,23 @@ def train_model(model, criterion, optimizer, num_epochs):
 
     return
 
-lr = 0.1
-# training_name = 'COCO_conv4_GREYMASK_trans_lr{}_wd'.format(lr)
-training_name = 'fake'
+lr = 0.01
+training_name = 'fm2img_conv4_lr{}_wd'.format(lr)
+# training_name = 'test_conv3'
 
-data_dir = '/fldata/dataset/coco/mask/feature_map-conv4pool'
-featuremap_datasets = {x: FeatureReader(os.path.join(data_dir, x))
+img_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/'
+fm_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map/feature_map-conv4pool/'
+
+# Converts a PIL Image or numpy.ndarray (H x W x C) in the range [0, 255] 
+# to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0]
+data_transforms = transforms.Compose([transforms.ToTensor()])
+
+featuremap_datasets = {x: FmImgReader(os.path.join(img_dir, x, '0'),
+					os.path.join(fm_dir,x, '0'), 
+					transform=data_transforms)
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
-                                                shuffle=False, num_workers=0)
+                                                shuffle=False, num_workers=6)
                                                 for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
 print (dataset_sizes)
@@ -119,7 +123,7 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 pretrained_model = None
-model_trans = build_UNet(type='UNet1', use_dropout=False, pretrained_model=pretrained_model)
+model_trans = build_model(pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 
@@ -131,4 +135,4 @@ optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weigh
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 print(training_name)
-train_model(model_trans, criterion, optimizer_trans, num_epochs=10000)
+train_model(model_trans, criterion, optimizer_trans, num_epochs=400)
