@@ -16,7 +16,7 @@ from flood_models import build_UNet
 from read_featuremap import FeatureReader
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def train_model(model, criterion, optimizer, num_epochs):
     since = time.time()
@@ -72,7 +72,7 @@ def train_model(model, criterion, optimizer, num_epochs):
                 iter_loss = loss.data[0] * fm.size(0)
                 running_loss += iter_loss
                 
-                if ix % 300 == 0:
+                if ix % 100 == 0:
                     print ('{}: iter {}, Loss = {:.4f}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), ix, iter_loss))
 
             epoch_loss = running_loss / dataset_sizes[phase]
@@ -95,8 +95,8 @@ def train_model(model, criterion, optimizer, num_epochs):
 
     return
 
-lr = 0.05
-training_name = 'COCO_caf_conv4_GREYMASK_trans_lr{}_wd'.format(lr)
+lr = 0.01
+training_name = 'COCO_caf_conv4_GREYMASK_trans_lr{}_newnet_do'.format(lr)
 # training_name = 'test_conv3'
 
 data_dir = '/fldata/dataset/coco/mask/feature_map-conv4pool-caffe'
@@ -115,12 +115,12 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 pretrained_model = None
-model_trans = build_UNet(type='UNet1', use_dropout=False, pretrained_model=pretrained_model)
+model_trans = build_UNet(type='UNet_conv4', use_dropout=True, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 
 criterion = nn.L1Loss()
-optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005)
+optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weight_decay=0.000)
 # optimizer_trans = optim.Adam(model_trans.parameters(), lr=lr, weight_decay=0.0005)
 
 # Decay LR by a factor of 0.1 every 7 epochs
