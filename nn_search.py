@@ -70,11 +70,12 @@ def nn_search(model, criterion, optimizer, num_epochs=1):
 
     return
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 use_gpu = torch.cuda.is_available()
 
-base_data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map-conv4pool/test/1'
-target_data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map-conv4pool/test/0'
+# base_data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map-conv4pool/test/1'
+base_data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map/conv4_occ_nnsearch/test/0'
+target_data_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map/feature_map-conv4pool/test/0'
 
 target_datasets = FeatureReader(target_data_dir)
 dataset_sizes = len(target_datasets)
@@ -82,16 +83,16 @@ target_dataloaders = torch.utils.data.DataLoader(target_datasets, batch_size=1,
                                                 shuffle=False, num_workers=4)
 
 base_datasets = FeatureReader(base_data_dir)
-assert dataset_sizes == len(base_datasets)
+# assert dataset_sizes == len(base_datasets)
 print(dataset_sizes)
 base_dataloaders = torch.utils.data.DataLoader(base_datasets, batch_size=1,
                                                 shuffle=False, num_workers=4)
 
-save_dir = os.path.join('save', 'nnsearch_MASK_kitti_UNet_lr0.01_SGD_dropout_250')
+save_dir = os.path.join('save', 'nnsearch_ADVMASK_kitti_conv4_OCC')
 if not os.path.exists(save_dir):
 	os.makedirs(save_dir)
-pretrained_model = '/pvdata/savemodel/MASK_kitti_UNet_lr0.01_SGD_dropout/transformer_MASK_kitti_UNet_lr0.01_SGD_dropout_250.pth'
-model_trans = build_UNet(type='UNet1', use_dropout=True, pretrained_model=pretrained_model)
+pretrained_model = '/pvdata/savemodel/MASKED_kitti_adv_lrg0.001_lrd1e-06_lmda0.01_r3.0_SHALLOW_DROP/transformer_MASKED_kitti_adv_lrg0.001_lrd1e-06_lmda0.01_r3.0_SHALLOW_DROP_55.pth'
+model_trans = build_UNet(type='UNet1', use_dropout=False, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 

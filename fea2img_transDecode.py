@@ -18,7 +18,7 @@ from fea2img_reader import FmImgReader
 import datetime
 from PIL import Image
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
 def train_model(model, model_trans, criterion, optimizer, num_epochs):
     since = time.time()
@@ -35,7 +35,9 @@ def train_model(model, model_trans, criterion, optimizer, num_epochs):
 
     # Iterate over data.
     for ix, data in enumerate(dataloaders[phase]):
-        # get the fm
+        if ix == 300:
+            break
+	# get the fm
         fm, gt, base_name = data
         
         # wrap them in Variable
@@ -55,9 +57,11 @@ def train_model(model, model_trans, criterion, optimizer, num_epochs):
         img = transforms.ToPILImage()(outputs.data[0].cpu()).convert('RGB')
         img.save(outputs_save_file, format='JPEG')
 
-        loss = criterion(outputs, gt)
+        # loss = criterion(outputs, gt)
+        loss = 0.0
 
-        iter_loss = loss.data[0] * fm.size(0)
+        #iter_loss = loss.data[0] * fm.size(0)
+        iter_loss = 0.0
         running_loss += iter_loss
         
         if ix % 100 == 0:
@@ -79,32 +83,36 @@ lr = 0.01
 # training_name = 'test_conv3'
 
 img_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/'
+#img_dir = '/pvdata/dataset/kitti/ped_inst/'
 fm_dir = '/pvdata/dataset/kitti/vehicle/mask_resize/feature_map/feature_map-conv4pool/'
+#fm_dir = '/pvdata/dataset/kitti/ped_inst/feature_map-conv4pool_resized/'
 
 # Converts a PIL Image or numpy.ndarray (H x W x C) in the range [0, 255] 
 # to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0]
 data_transforms = transforms.Compose([transforms.ToTensor()])
 
-featuremap_datasets = {x: FmImgReader(os.path.join(img_dir, x, '1'),
-					os.path.join(fm_dir,x, '1'), 
+featuremap_datasets = {x: FmImgReader(os.path.join(img_dir, x, '0'),
+					os.path.join(fm_dir,x, '0'), 
 					transform=data_transforms)
-                                          for x in ['train', 'test']}
+                                          for x in ['test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
                                                 shuffle=False, num_workers=6)
-                                                for x in ['train', 'test']}
-dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
+                                                for x in ['test']}
+dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['test']}
 print (dataset_sizes)
 
 use_gpu = torch.cuda.is_available()
 
-fea2img_pretrained_model = '/siyuvol/py_flood/save/fm2img_conv4_lr0.01_wd/transformer_fm2img_conv4_lr0.01_wd_70.pth'
-output_save_dir = '/siyuvol/output/fea2img/conv4_lr0.01_wd_70'
+fea2img_pretrained_model = '/siyuvol/py_flood/save/fm2img_conv4_lr0.01_wd/transformer_fm2img_conv4_lr0.01_wd_400.pth'
+output_save_dir = '/siyuvol/output/fea2img/all/ADVtransformed_conv4'
 if not os.path.exists(output_save_dir):
     os.makedirs(output_save_dir)
     
 model_fea2img = build_model(pretrained_model=fea2img_pretrained_model)
 
-trans_pretrained_model = '/pvdata/savemodel/MASK_kitti_UNet_lr0.01_SGD_dropout/transformer_MASK_kitti_UNet_lr0.01_SGD_dropout_250.pth'
+trans_pretrained_model = '/pvdata/savemodel/MASKED_kitti_adv_lrg0.001_lrd1e-06_lmda0.01_r3.0_SHALLOW_DROP/transformer_MASKED_kitti_adv_lrg0.001_lrd1e-06_lmda0.01_r3.0_SHALLOW_DROP_55.pth'
+# trans_pretrained_model = '/siyuvol/py_flood/save/PEDINST_MASK_kitti_trans_lr0.01/transformer_PEDINST_MASK_kitti_trans_lr0.01_200.pth'
+# trans_pretrained_model = '/pvdata/savemodel/MASK_kitti_UNet_lr0.01_SGD_dropout/transformer_MASK_kitti_UNet_lr0.01_SGD_dropout_250.pth'
 model_trans = build_UNet(type='UNet1', use_dropout=False, pretrained_model=trans_pretrained_model)
 
 if use_gpu:

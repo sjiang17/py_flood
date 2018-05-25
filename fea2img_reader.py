@@ -22,7 +22,8 @@ def make_dataset(img_dir, fm_dir):
     data_list = []
     img_dir = os.path.expanduser(img_dir)
     fm_dir = os.path.expanduser(fm_dir)
-    assert (os.path.exists(fm_dir) and os.path.exists(img_dir))
+    assert (os.path.exists(fm_dir)), "{} not exist".format(fm_dir) 
+    assert (os.path.exists(img_dir)), "{} not exist".format(img_dir)
 
     for fname in sorted(os.listdir(fm_dir)):        
         fm_path = os.path.join(fm_dir, fname)
