@@ -66,7 +66,7 @@ def train_model(model, criterion, optimizer, num_epochs, dataloaders):
                 iter_loss = loss.data[0] * inputs.size(0)
                 running_loss += iter_loss
                 
-                if ix % 100 == 0:
+                if ix % 500 == 0:
                     print ('{}: iter {}, Loss = {:.4f}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), ix, iter_loss))
 
             epoch_loss = running_loss / dataset_sizes[phase]
@@ -89,10 +89,10 @@ def train_model(model, criterion, optimizer, num_epochs, dataloaders):
     return
 
 ############################
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 use_gpu = torch.cuda.is_available()
 
-lr = 0.01
+lr = 0.05
 training_name = 'RoI_kitti_lr{}'.format(lr)
 # training_name = 'test3'
 
@@ -113,7 +113,7 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 pretrained_model = None
-model_trans = build_net(type='RoI_Net', use_dropout=True, pretrained_model=pretrained_model)
+model_trans = build_net(type='RoI_UNet', use_dropout=True, pretrained_model=pretrained_model)
 if use_gpu:
     model_trans = model_trans.cuda()
 
@@ -125,4 +125,4 @@ optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weigh
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 print(training_name)
-train_model(model_trans, criterion, optimizer_trans, num_epochs=400, dataloaders)
+train_model(model_trans, criterion, optimizer_trans, 400, dataloaders)

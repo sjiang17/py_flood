@@ -18,8 +18,8 @@ def make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase):
     assert (os.path.exists(unocc_data_dir)), "{} not exist".format(unocc_data_dir) 
     assert (os.path.exists(pairFile_dir)), "{} not exist".format(pairFile_dir) 
 
-    occ2unocc_pair = cPickle.load(open(os.path.join(pairFile_dir, phase+'occ2unocc_pair.pkl'), 'r'))
-    unocc2unocc_pair = cPickle.load(open(os.path.join(pairFile_dir, phase+'unocc2unocc_pair.pkl'), 'r'))
+    occ2unocc_pair = cPickle.load(open(os.path.join(pairFile_dir, phase+'_occ2unocc_pair.pkl'), 'r'))
+    unocc2unocc_pair = cPickle.load(open(os.path.join(pairFile_dir, phase+'_unocc2unocc_pair.pkl'), 'r'))
 
     data_list = []
     for pair in occ2unocc_pair.items():
@@ -50,9 +50,9 @@ class FeatureReader(data.Dataset):
     def __getitem__(self, index):
 
         input_path, target_path = self.data_list[index]
-        input = self.fm_loader(fm_path)
-        target = self.fm_loader(img_path)
-        return input, target
+        inputs = self.fm_loader(input_path)
+        target = self.fm_loader(target_path)
+        return inputs, target
 
     def __len__(self):
         return len(self.data_list)

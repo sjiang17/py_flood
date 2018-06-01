@@ -17,7 +17,7 @@ from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"
 
 lr = 0.1
 # training_name = 'caf_GREYMASK_kitti_trans_lr_NewConv4Net{}'.format(lr)
@@ -150,4 +150,4 @@ optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weigh
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
 print(training_name)
-train_model(model_trans, criterion, optimizer_trans, num_epochs=1000)
+train_model(model_trans, criterion, optimizer_trans, num_epochs=10000)
