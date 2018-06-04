@@ -31,7 +31,7 @@ def mask_img(box):
 def black_patch(img, annot):
 	# for every object
 	# random mask black patch
-	prob = 0.8
+	prob = 1.0
 	boxes = annot['boxes']
 	gt_classes = annot['gt_classes']
 	occluded = annot['occluded']
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 	random.seed(100)
 	kitti_dir = '/siyuvol/dataset/kitti/training'
 	
-	save_dir = '/pvdata/dataset/kitti/vehicle/mask_resize'
+	save_dir = '/pvdata/dataset/kitti/vehicle/mask_noresize'
 	train_dir_0 = os.path.join(save_dir, 'train/0')
 	train_dir_1 = os.path.join(save_dir, 'train/1')
 	test_dir_0 = os.path.join(save_dir, 'test/0')
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 	
 	
 	kitti = my_kitti(kitti_dir)
-	kitti._annot_dir = '/pvdata/dataset/kitti/vehicle/annotation'
+	kitti._annot_dir = '/pvdata/dataset/kitti/vehicle/roi/unocc/annotation' 
 	# get all images 
 	img_list = kitti._list_imgs()
 	# get all annotations
@@ -101,7 +101,7 @@ if __name__ == '__main__':
 		if ix % 200 == 0:
 			print "processed {} out of {} images".format(ix, len(img_list))
 			
-		is_test = True if (ix % 5 == 0) else False
+		is_test = True if (ix > 4936) else False
 		img = cv2.imread(img_file)
 		img_resize_origin = cv2.resize(img, (1000, 600), interpolation=cv2.INTER_CUBIC) 
 		# get annotations 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 		
 		# annot_mv_file = os.path.join(annot_mv_dir, os.path.basename(annot_file))
 		# shutil.copyfile(annot_file, annot_mv_file)
-		cv2.imwrite(origin_save_file, img_resize_origin)
-		# shutil.copyfile(img_file, origin_save_file)
-		img = cv2.resize(img, (1000, 600), interpolation=cv2.INTER_CUBIC)
+		# cv2.imwrite(origin_save_file, img_resize_origin)
+		shutil.copyfile(img_file, origin_save_file)
+		# img = cv2.resize(img, (1000, 600), interpolation=cv2.INTER_CUBIC)
 		cv2.imwrite(save_file, img)

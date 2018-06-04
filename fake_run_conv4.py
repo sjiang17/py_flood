@@ -17,7 +17,7 @@ from read_featuremap_occlusion import FeatureReader
 from my_loss import L1Loss
 import datetime
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 lr = 0.1
 # training_name = 'caf_GREYMASK_kitti_trans_lr_NewConv4Net{}'.format(lr)

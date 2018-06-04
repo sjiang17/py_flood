@@ -12,6 +12,9 @@ import datetime
 from roi_models import build_net
 from roi_reader import FeatureReader
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+use_gpu = torch.cuda.is_available()
+
 def train_model(model, criterion, optimizer, num_epochs, dataloaders):
     since = time.time()
     
@@ -66,7 +69,7 @@ def train_model(model, criterion, optimizer, num_epochs, dataloaders):
                 iter_loss = loss.data[0] * inputs.size(0)
                 running_loss += iter_loss
                 
-                if ix % 500 == 0:
+                if ix % 1000 == 0:
                     print ('{}: iter {}, Loss = {:.4f}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), ix, iter_loss))
 
             epoch_loss = running_loss / dataset_sizes[phase]
@@ -89,11 +92,8 @@ def train_model(model, criterion, optimizer, num_epochs, dataloaders):
     return
 
 ############################
-os.environ["CUDA_VISIBLE_DEVICES"] = "5"
-use_gpu = torch.cuda.is_available()
-
-lr = 0.05
-training_name = 'RoI_kitti_lr{}'.format(lr)
+lr = 0.01
+training_name = 'RoI_kitti_lr{}_wd'.format(lr)
 # training_name = 'test3'
 
 pairfile_dir = '/pvdata/dataset/kitti/vehicle/roi'
@@ -118,7 +118,7 @@ if use_gpu:
     model_trans = model_trans.cuda()
 
 criterion = nn.L1Loss()
-optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weight_decay=0)
+optimizer_trans = optim.SGD(model_trans.parameters(), lr=lr, momentum=0.9, weight_decay=0.0005)
 # optimizer_trans = optim.Adam(model_trans.parameters(), lr=lr, weight_decay=0.0005)
 
 # Decay LR by a factor of 0.1 every 7 epochs
