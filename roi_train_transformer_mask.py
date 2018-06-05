@@ -10,7 +10,7 @@ import os
 import time
 import datetime
 from roi_models import build_net
-from roi_reader import FeatureReader
+from roi_mask_reader import FeatureReader
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 use_gpu = torch.cuda.is_available()
@@ -93,7 +93,7 @@ def train_model(model, criterion, optimizer, num_epochs, dataloaders):
 
 ############################
 lr = 0.01
-training_name = 'RoI_kitti_lr{}_wd'.format(lr)
+training_name = 'RoI_mask_kitti_lr{}_wd'.format(lr)
 # training_name = 'test3'
 
 pairfile_dir = '/pvdata/dataset/kitti/vehicle/roi'

@@ -27,17 +27,17 @@ def make_dataset(occ_data_dir, unocc_data_dir, mask_data_dir, pairFile_dir, phas
     for pair in occ2unocc_pair.items():
         p0 = os.path.join(occ_data_dir, pair[0])
         p1 = os.path.join(unocc_data_dir, pair[1])
-        assert (os.path.exists(p0), p0)
-        assert (os.path.exists(p1), p1)
+        assert os.path.exists(p0), p0
+        assert os.path.exists(p1), p1
         data_list.append((p0, p1))
     for pair in unocc2unocc_pair.items():
         p0 = os.path.join(mask_data_dir, pair[0])
         p1 = os.path.join(unocc_data_dir, pair[1])
-        assert (os.path.exists(p0), p0)
+        assert os.path.exists(p0), p0
         data_list.append((p0, p1))
     for pair in unocc2unocc_pair.items():
         p1 = os.path.join(unocc_data_dir, pair[0])
-        assert (os.path.exists(p1), p1)
+        assert os.path.exists(p1), p1
         data_list.append((p1, p1))
 
     random.shuffle(data_list)
