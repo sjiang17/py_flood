@@ -4,24 +4,27 @@ import os
 import h5py
 import cPickle
 import random
+import copy
 
 def h5_loader(path):
     assert path.endswith('.h5')
     return np.array(h5py.File(path, 'r')['data'])
 
-def make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase):
+def make_dataset(occ_data_dir, unocc_data_dir, phase):
     occ_data_dir = os.path.expanduser(os.path.join(occ_data_dir, phase))
     unocc_data_dir = os.path.expanduser(os.path.join(unocc_data_dir, phase))
-    pairFile_dir = os.path.expanduser(pairFile_dir)
 
     assert (os.path.exists(occ_data_dir)), "{} not exist".format(occ_data_dir) 
     assert (os.path.exists(unocc_data_dir)), "{} not exist".format(unocc_data_dir) 
     
-    occ_feas = [f for f in os.listdir(occ_data_dir) if f.endswith('.xml')]
-    unocc_feas = [f for f in os.listdir(unocc_data_dir) if f.endswith('.xml')]
-
+    occ_feas = [f for f in os.listdir(occ_data_dir) if f.endswith('.h5')]
+    unocc_feas = [f for f in os.listdir(unocc_data_dir) if f.endswith('.h5')]
+    print(len(occ_feas))
     unocc_feas_shuffle = copy.deepcopy(unocc_feas)
-    shuffle(unocc_feas_shuffle)
+    random.shuffle(unocc_feas_shuffle)
+    
+    occ2unocc_pair = {}
+    unocc2unocc_pair = {}
     ix = 0
     for occ_fea in occ_feas:
         if ix == len(unocc_feas_shuffle):
@@ -47,10 +50,10 @@ def make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase):
     return data_list
 
 class FeatureReader(data.Dataset):
-    def __init__(self, occ_data_dir, unocc_data_dir, pairFile_dir, phase, fm_loader=h5_loader):
-        data_list = make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase)
+    def __init__(self, occ_data_dir, unocc_data_dir, phase, fm_loader=h5_loader):
+        data_list = make_dataset(occ_data_dir, unocc_data_dir, phase)
         if len(data_list) == 0:
-            raise(RuntimeError("Found 0 feature in subfolders of: " + img_dir + "\n"))
+            raise(RuntimeError("Found 0 feature in subfolders of: " + occ_data_dir + "\n"))
 
         self.occ_data_dir = occ_data_dir
         self.unocc_data_dir = unocc_data_dir

@@ -12,7 +12,7 @@ import datetime
 from roi_models import build_net
 from roi_unpair_reader import FeatureReader
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 use_gpu = torch.cuda.is_available()
 
 def train_model(model, criterion, optimizer, num_epochs):
@@ -24,7 +24,7 @@ def train_model(model, criterion, optimizer, num_epochs):
 
         print('preparing dataset...')
         featuremap_datasets['train'] = FeatureReader(occ_data_dir, 
-                                        unocc_data_dir, pairfile_dir, phase='train')
+                                        unocc_data_dir, phase='train')
                                           
         dataloaders['train'] = torch.utils.data.DataLoader(featuremap_datasets['train'], 
                                             batch_size=1, shuffle=False, num_workers=6)
@@ -109,8 +109,9 @@ training_name = 'RoI_unpair_kitti_lr{}_wd'.format(lr)
 occ_data_dir = '/pvdata/dataset/kitti/vehicle/roi/occ/roi_feature'
 unocc_data_dir = '/pvdata/dataset/kitti/vehicle/roi/unocc/roi_feature'
 
+featuremap_datasets, dataloaders = {}, {}
 featuremap_datasets['test'] = FeatureReader(occ_data_dir, unocc_data_dir, 
-                                    pairfile_dir, phase='test')                                       
+                                    phase='test')                                       
 dataloaders['test'] = torch.utils.data.DataLoader(featuremap_datasets['test'], 
                                     batch_size=1, shuffle=False, num_workers=6)
 
