@@ -6,7 +6,7 @@ import numpy as np
 
 occ2unocc_pair = {}
 
-phase = 'test'
+phase = 'train'
 occ_dir = '/pvdata/dataset/kitti/vehicle/roi/occ/roi_feature/' + phase
 unocc_dir = '/pvdata/dataset/kitti/vehicle/roi/unocc/roi_feature/' + phase
 
@@ -15,7 +15,7 @@ occ_feas = os.listdir(occ_dir)
 print len(occ_feas)
 
 obj_alpha_pair = cPickle.load(open('/pvdata/dataset/kitti/vehicle/roi/occ_obj_alpha_pair.pkl', 'r'))
-alpha_objs_dict = cPickle.load(open('/pvdata/dataset/kitti/vehicle/roi/unocc_alpha_objs_dict.pkl', 'r'))
+alpha_objs_dict = cPickle.load(open('/pvdata/dataset/kitti/vehicle/roi/'+phase+'_unocc_alpha_objs_dict.pkl', 'r'))
 
 print len(obj_alpha_pair)
 
@@ -28,7 +28,8 @@ print group_len
 
 alpha_occ2unocc_pair = {}
 for occ_fea in occ_feas:
-	basename = occ_fea.strip('.h5')
+#	print occ_fea
+	basename = occ_fea.split('.h5')[0]
 	group = obj_alpha_pair[basename]
 
 	if group_ind[group] >= group_len[group]:
