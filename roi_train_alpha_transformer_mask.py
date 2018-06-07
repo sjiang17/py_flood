@@ -12,7 +12,7 @@ import datetime
 from roi_models import build_net
 from roi_alpha_reader import FeatureReader
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 use_gpu = torch.cuda.is_available()
 
 def train_model(model, criterion, optimizer, num_epochs, dataloaders):

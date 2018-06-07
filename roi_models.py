@@ -92,7 +92,6 @@ class RoI_UNet2(nn.Module):
 		x_input	= x
 		x = self.e1(x)
 		x = self.e2(x)
-		x = self.e3(x)
 		x = self.d1_deconv(x, output_size=x_input.size())
 		x = self.d1(x)
 		x = self.d2(torch.cat([x_input, x], 1))

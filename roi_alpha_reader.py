@@ -25,12 +25,12 @@ def make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase):
     for pair in occ2unocc_pair.items():
         p0 = os.path.join(occ_data_dir, pair[0] + '.h5')
         p1 = os.path.join(unocc_data_dir, pair[1].split('un')[1] + '.h5')
-        assert (os.path.exists(p0), p0)
-        assert (os.path.exists(p1), p1)
+        assert os.path.exists(p0), p0
+        assert os.path.exists(p1), p1
         data_list.append((p0, p1))
     for pair in unocc2unocc_pair.items():
         p1 = os.path.join(unocc_data_dir, pair[0])
-        assert (os.path.exists(p1), p1)
+        assert os.path.exists(p1), p1
         data_list.append((p1, p1))
 
     random.shuffle(data_list)
@@ -53,8 +53,8 @@ def make_dataset_mask(occ_data_dir, unocc_data_dir, mask_data_dir, pairFile_dir,
     for pair in occ2unocc_pair.items():
         p0 = os.path.join(occ_data_dir, pair[0] + '.h5')
         p1 = os.path.join(unocc_data_dir, pair[1].split('un')[1] + '.h5')
-        assert (os.path.exists(p0), p0)
-        assert (os.path.exists(p1), p1)
+        assert os.path.exists(p0), p0
+        assert os.path.exists(p1), p1
         data_list.append((p0, p1))
     if phase == 'train':
         for pair in unocc2unocc_pair.items():
@@ -64,14 +64,14 @@ def make_dataset_mask(occ_data_dir, unocc_data_dir, mask_data_dir, pairFile_dir,
             data_list.append((p0, p1))
     for pair in unocc2unocc_pair.items():
         p1 = os.path.join(unocc_data_dir, pair[0])
-        assert (os.path.exists(p1), p1)
+        assert os.path.exists(p1), p1
         data_list.append((p1, p1))
 
     random.shuffle(data_list)
     return data_list
 
 class FeatureReader(data.Dataset):
-    def __init__(self, occ_data_dir, unocc_data_dir, pairFile_dir, phase, maker='make_dataset', fm_loader=h5_loader):
+    def __init__(self, occ_data_dir, unocc_data_dir, mask_data_dir, pairFile_dir, phase, maker='make_dataset', fm_loader=h5_loader):
         if maker == 'make_dataset':
             data_list = make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase)
         elif maker == 'make_dataset_mask':
