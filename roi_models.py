@@ -99,6 +99,27 @@ class RoI_UNet2(nn.Module):
 		
 		return x
 
+class DNet(nn.Module):
+	def __init__(self):
+		super(DNet, self).__init__()
+		
+		self.classifier = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, 1),
+            nn.Sigmoid(),
+        )
+		
+	def forward(self, x):
+		x = x.view(x.size(0), -1)
+		x = self.classifier(x)
+
+		return x
+
 def weights_init_xavier(m):
 	classname = m.__class__.__name__
 	# print(classname)
@@ -126,6 +147,15 @@ def build_net(type='RoI_UNet', use_bias=True, use_dropout=False, pretrained_mode
 	else: 
 		model.load_state_dict(torch.load(pretrained_model))
 	
+	return model
+
+def build_DNet(pretrained_model=None):
+	model = DNet()
+	if pretrained_model == None:
+		model.apply(weights_init_xavier)
+	else:
+		model.load_state_dict(torch.load(pretrained_model))
+		
 	return model
 	
         
