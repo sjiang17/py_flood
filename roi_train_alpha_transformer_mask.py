@@ -93,14 +93,16 @@ def train_model(model, criterion, optimizer, num_epochs, dataloaders):
 
 ############################
 lr = 0.01
-training_name = 'RoI_alpha_kitti_lr{}_u2'.format(lr)
+training_name = 'RoI_alpha_mask_kitti_lr{}_u2'.format(lr)
 # training_name = 'test3'
 
 pairfile_dir = '/pvdata/dataset/kitti/vehicle/roi'
 occ_data_dir = '/pvdata/dataset/kitti/vehicle/roi/occ/roi_feature'
 unocc_data_dir = '/pvdata/dataset/kitti/vehicle/roi/unocc/roi_feature'
+mask_data_dir = '/pvdata/dataset/kitti/vehicle/roi/mask/roi_feature/'
 
-featuremap_datasets = {x: FeatureReader(occ_data_dir, unocc_data_dir, pairfile_dir, phase=x)
+featuremap_datasets = {x: FeatureReader(occ_data_dir, unocc_data_dir, mask_data_dir, 
+                                        pairfile_dir, maker='make_dataset_mask' ,phase=x)
                                           for x in ['train', 'test']}
 dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
                                                 shuffle=False, num_workers=6)

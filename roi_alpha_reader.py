@@ -36,9 +36,47 @@ def make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase):
     random.shuffle(data_list)
     return data_list
 
+def make_dataset_mask(occ_data_dir, unocc_data_dir, mask_data_dir, pairFile_dir, phase):
+    occ_data_dir = os.path.expanduser(os.path.join(occ_data_dir, phase))
+    unocc_data_dir = os.path.expanduser(os.path.join(unocc_data_dir, phase))
+    mask_data_dir = os.path.expanduser(os.path.join(mask_data_dir, phase))
+    pairFile_dir = os.path.expanduser(pairFile_dir)
+
+    assert (os.path.exists(occ_data_dir)), "{} not exist".format(occ_data_dir) 
+    assert (os.path.exists(unocc_data_dir)), "{} not exist".format(unocc_data_dir) 
+    assert (os.path.exists(pairFile_dir)), "{} not exist".format(pairFile_dir) 
+
+    occ2unocc_pair = cPickle.load(open(os.path.join(pairFile_dir, phase+'_alpha_occ2unocc_pair.pkl'), 'r'))
+    unocc2unocc_pair = cPickle.load(open(os.path.join(pairFile_dir, phase+'_unocc2unocc_pair.pkl'), 'r'))
+
+    data_list = []
+    for pair in occ2unocc_pair.items():
+        p0 = os.path.join(occ_data_dir, pair[0] + '.h5')
+        p1 = os.path.join(unocc_data_dir, pair[1].split('un')[1] + '.h5')
+        assert (os.path.exists(p0), p0)
+        assert (os.path.exists(p1), p1)
+        data_list.append((p0, p1))
+    if phase == 'train':
+        for pair in unocc2unocc_pair.items():
+            p0 = os.path.join(mask_data_dir, pair[0])
+            p1 = os.path.join(unocc_data_dir, pair[1])
+            assert os.path.exists(p0), p0
+            data_list.append((p0, p1))
+    for pair in unocc2unocc_pair.items():
+        p1 = os.path.join(unocc_data_dir, pair[0])
+        assert (os.path.exists(p1), p1)
+        data_list.append((p1, p1))
+
+    random.shuffle(data_list)
+    return data_list
+
 class FeatureReader(data.Dataset):
-    def __init__(self, occ_data_dir, unocc_data_dir, pairFile_dir, phase, fm_loader=h5_loader):
-        data_list = make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase)
+    def __init__(self, occ_data_dir, unocc_data_dir, pairFile_dir, phase, maker='make_dataset', fm_loader=h5_loader):
+        if maker == 'make_dataset':
+            data_list = make_dataset(occ_data_dir, unocc_data_dir, pairFile_dir, phase)
+        elif maker == 'make_dataset_mask':
+            data_list = make_dataset_mask(occ_data_dir, unocc_data_dir, mask_data_dir, pairFile_dir, phase)
+        
         if len(data_list) == 0:
             raise(RuntimeError("Found 0 feature in subfolders of: " + occ_data_dir + "\n"))
 
