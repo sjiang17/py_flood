@@ -12,9 +12,9 @@ import datetime
 from roi_models import build_net, build_DNet
 from roi_alpha_reader import FeatureReader
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 use_gpu = torch.cuda.is_available()
-
+BATCH_SIZE = 4
 
 def myGetVariable(a, use_gpu, phase):
     if use_gpu:
@@ -31,8 +31,7 @@ def myGetVariable(a, use_gpu, phase):
 
 def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optimizer_D, num_epochs, dataloaders):
     since = time.time()
-    label_adv_tensor = torch.FloatTensor(1)  # BATCH_SIZE
-
+    
     for epoch in range(1, num_epochs + 1):
         print('Epoch {}/{}'.format(epoch, num_epochs))
         print('-' * 10)
@@ -61,6 +60,9 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
             for ix, data in enumerate(dataloaders[phase]):
                 # get the inputs
                 inputs, gt = data
+                iter_batch_size = inputs.size(0)
+                label_adv_tensor = torch.FloatTensor(iter_batch_size)  # BATCH_SIZE
+                label_threshold = torch.ones(iter_batch_size) * 0.5
 
                 # wrap them in Variable
                 inputs = myGetVariable(inputs, use_gpu, phase)
@@ -74,10 +76,10 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
                 optimizer_D.zero_grad()
                 label_adv_real = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase)
                 outputs_D_real = netD(gt)
-                od1 = outputs_D_real.data.cpu()[0, 0]
-                # print('od1: ', od1)
-                acc_d1_iter += (od1 >= 0.5)
-                acc_d1_epoch += (od1 >= 0.5)
+                correct = (outputs_D_real.data.cpu().view(4) >= label_threshold).sum()
+                # od1 = outputs_D_real.data.cpu()[0, 0]
+                acc_d1_iter += correct 
+                acc_d1_epoch += correct
 
                 loss_D_real = criterion_adv(outputs_D_real, label_adv_real)
                 if phase == 'train':
@@ -88,9 +90,10 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
                 outputs_trans = netG(inputs)  # fake
                 label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
                 outputs_D_fake = netD(outputs_trans.detach())
-                od2 = outputs_D_fake.data.cpu()[0, 0]
-                acc_d2_iter += (od2 < 0.5)
-                acc_d2_epoch += (od2 < 0.5)
+                # od2 = outputs_D_fake.data.cpu()[0, 0]
+                correct = (outputs_D_real.data.cpu().view(4) < label_threshold).sum()
+                acc_d2_iter += correct
+                acc_d2_epoch += correct
 
                 loss_D_fake = criterion_adv(outputs_D_fake, label_adv_fake)
                 if phase == 'train':
@@ -121,12 +124,12 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
                 iter_loss_gen = loss_gen.data[0] * inputs.size(0)
                 iter_loss_adv = loss_adv.data[0] * inputs.size(0)
 
-                if ix % 1000 == 0:
+                if ix % 500 == 0:
                     print('{}: iter {}, Loss Trans={:.4f}, Gen={:.4f}, Adv={:.4f}'.format(
                             datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), ix, 
                             iter_loss_trans, iter_loss_gen, iter_loss_adv))
                     print('{:18s}Adv Real={:.8f}, Adv Fake={:.8f}, acc real: {:.2f}, acc fake: {:.2f}'.format(
-                            '', iter_loss_adv_real, iter_loss_adv_fake, acc_d1_iter / 1000.0, acc_d2_iter / 1000.0))
+                            '', iter_loss_adv_real, iter_loss_adv_fake, acc_d1_iter/BATCH_SIZE / 500.0, acc_d2_iter/BATCH_SIZE / 500.0))
                     acc_d1_iter, acc_d2_iter = 0.0, 0.0
 
                 # statistics
@@ -152,11 +155,10 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
             summary_file.write("{}: {} Loss Trans={:.4f}, Gen={:.4f}, Adv={:.4f}\n".format(
                                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), phase, 
                                 epoch_loss_trans, epoch_loss_gen, epoch_loss_adv))
-            summary_file.write('Adv Real={:.8f}, Adv Fake={:.8f}, acc real={:.4f}, \
-                                acc fake={:.4f}\n'.format(epoch_loss_adv_real, 
-                                epoch_loss_adv_fake, acc_d1_epoch, acc_d2_epoch))
+            summary_file.write('{:27s}Adv Real={:.8f}, Adv Fake={:.8f}, acc real={:.4f}, acc fake={:.4f}\n'.format(
+                                '', epoch_loss_adv_real, epoch_loss_adv_fake, acc_d1_epoch, acc_d2_epoch))
 
-            if epoch == 1 or epoch % 10 == 0:
+            if epoch % 10 == 0:
                 save_name_netG = 'netG_{}_{}.pth'.format(training_name, epoch)
                 torch.save(netG.state_dict(), os.path.join(save_dir, save_name_netG))
                 save_name_netD = 'netD_{}_{}.pth'.format(training_name, epoch)
@@ -175,7 +177,7 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
 ############################
 lr_g = 0.001
 lr_d = 1e-6
-lmda = 0.0001
+lmda = 0.5
 training_name = 'ADV_RoI_alpha_kitti_lrg{}_lrd{}_lmda{}_u2'.format(lr_g, lr_d, lmda)
 # training_name = 'test3'
 
@@ -185,13 +187,13 @@ unocc_data_dir = '/pvdata/dataset/kitti/vehicle/roi/unocc/roi_feature'
 
 featuremap_datasets = {x: FeatureReader(occ_data_dir, unocc_data_dir, '', pairfile_dir, phase=x)
                        for x in ['train', 'test']}
-dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=1,
+dataloaders = {x: torch.utils.data.DataLoader(featuremap_datasets[x], batch_size=BATCH_SIZE,
                                               shuffle=False, num_workers=6)
                                               for x in ['train', 'test']}
 dataset_sizes = {x: len(featuremap_datasets[x]) for x in ['train', 'test']}
 print(dataset_sizes)
 
-save_dir = os.path.join('adv/save', training_name)
+save_dir = os.path.join('save/adv', training_name)
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
