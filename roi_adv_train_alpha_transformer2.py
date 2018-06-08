@@ -14,7 +14,7 @@ from roi_alpha_reader import FeatureReader
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 use_gpu = torch.cuda.is_available()
-BATCH_SIZE = 4
+BATCH_SIZE = 16
 
 def myGetVariable(a, use_gpu, phase):
     if use_gpu:
@@ -76,7 +76,7 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
                 optimizer_D.zero_grad()
                 label_adv_real = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase)
                 outputs_D_real = netD(gt)
-                correct = (outputs_D_real.data.cpu().view(4) >= label_threshold).sum()
+                correct = (outputs_D_real.data.cpu().view(iter_batch_size) >= label_threshold).sum()
                 # od1 = outputs_D_real.data.cpu()[0, 0]
                 acc_d1_iter += correct 
                 acc_d1_epoch += correct
@@ -91,7 +91,7 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
                 label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
                 outputs_D_fake = netD(outputs_trans.detach())
                 # od2 = outputs_D_fake.data.cpu()[0, 0]
-                correct = (outputs_D_real.data.cpu().view(4) < label_threshold).sum()
+                correct = (outputs_D_real.data.cpu().view(iter_batch_size) < label_threshold).sum()
                 acc_d2_iter += correct
                 acc_d2_epoch += correct
 
@@ -175,8 +175,8 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
     return
 
 ############################
-lr_g = 0.001
-lr_d = 1e-6
+lr_g = 0.05
+lr_d = 1e-5
 lmda = 0.5
 training_name = 'ADV_RoI_alpha_kitti_lrg{}_lrd{}_lmda{}_u2'.format(lr_g, lr_d, lmda)
 # training_name = 'test3'
