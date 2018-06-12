@@ -77,10 +77,10 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
                 optimizer_D.zero_grad()
                 label_adv_real = myGetVariable(label_adv_tensor.fill_(1), use_gpu, phase)
                 outputs_D_real = netD(gt)
-                correct = (outputs_D_real.data.cpu().view(iter_batch_size) >= label_threshold).sum()
+                correct_r = (outputs_D_real.data.cpu().view(iter_batch_size) >= label_threshold).sum()
                 # od1 = outputs_D_real.data.cpu()[0, 0]
-                acc_d1_iter += correct 
-                acc_d1_epoch += correct
+                acc_d1_iter += correct_r 
+                acc_d1_epoch += correct_r
 
                 loss_D_real = criterion_adv(outputs_D_real, label_adv_real)
                 if phase == 'train':
@@ -92,9 +92,9 @@ def train_model(netG, netD, criterion_rec, criterion_adv, optimizer_trans, optim
                 label_adv_fake = myGetVariable(label_adv_tensor.fill_(0), use_gpu, phase)
                 outputs_D_fake = netD(outputs_trans.detach())
                 # od2 = outputs_D_fake.data.cpu()[0, 0]
-                correct = (outputs_D_real.data.cpu().view(iter_batch_size) < label_threshold).sum()
-                acc_d2_iter += correct
-                acc_d2_epoch += correct
+                correct_f = (outputs_D_fake.data.cpu().view(iter_batch_size) < label_threshold).sum()
+                acc_d2_iter += correct_f
+                acc_d2_epoch += correct_f
 
                 loss_D_fake = criterion_adv(outputs_D_fake, label_adv_fake)
                 if phase == 'train':
